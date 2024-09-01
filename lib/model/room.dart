@@ -61,7 +61,7 @@ class Room {
     return true;
   }
 
-  Map<String, dynamic>? checkPerformEvent(
+  CheckResult checkPerformEvent(
       {required Map<String, dynamic> event, required Player player}) {
     return game.checkPerformEvent(
         event: event, player: player, gameState: gameState, players: players);

@@ -2,6 +2,18 @@ import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/player.dart';
 import 'package:pair/pair.dart';
 
+class NotPlayerTurn extends CheckResultFailure {
+  const NotPlayerTurn() : super("Not player's turn");
+}
+
+class OutOfBounds extends CheckResultFailure {
+  const OutOfBounds() : super("Position out of bounds");
+}
+
+class PositionAlreadyTaken extends CheckResultFailure {
+  const PositionAlreadyTaken() : super("Position already taken");
+}
+
 class TicTacToe extends Game {
   // Game ID name
   @override
@@ -15,21 +27,21 @@ class TicTacToe extends Game {
 
   // Check if player can perform an event and return data.
   @override
-  Map<String, dynamic>? checkPerformEvent(
+  CheckResult checkPerformEvent(
       {required Map<String, dynamic> event,
       required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players}) {
     if (players[gameState["currentPlayer"]] != player) {
-      return {"reason": "Not player's turn"};
+      return const NotPlayerTurn();
     }
     if (event["position"] < 0 || event["position"] >= 9) {
-      return {"reason": "Position out of bounds"};
+      return const OutOfBounds();
     }
     if (gameState["board"][event["position"]] != -1) {
-      return {"reason": "Position already taken"};
+      return const PositionAlreadyTaken();
     }
-    return null;
+    return const CheckResultSuccess();
   }
 
   // Process new event and return if it was successful.
