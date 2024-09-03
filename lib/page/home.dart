@@ -89,7 +89,7 @@ class _HomeState extends State<Home> {
                           builder: (context) => TicTacToePage()));
                     }
                   },
-                  child: Text(doc.id)
+                  child: Text("${doc.data()?["host"]["name"]}'s Room")
                   // child: Text(
                   //     "${room.players.firstOrNull?.name} | ${room.players.length}/${gameManager.game?.maxPlayers} players"),
                   ))

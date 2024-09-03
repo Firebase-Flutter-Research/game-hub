@@ -51,18 +51,18 @@ class GameManager {
     return FirebaseFirestore.instance.collection(collectionName).snapshots();
   }
 
-  void callPlayerEvents(List<Player> updatedPlayers) {
+  void callPlayerEvents(List<Player> updatedPlayers, Player host) {
     final oldPlayersSet = _room!.players.toSet();
     final updatedPlayersSet = updatedPlayers.toSet();
     final deletedPlayers = oldPlayersSet.difference(updatedPlayersSet);
     final newPlayers = updatedPlayersSet.difference(oldPlayersSet);
     for (final player in deletedPlayers) {
       _game!.onPlayerLeave(
-          player: player, gameState: _room!.gameState, players: updatedPlayers);
+          player: player, gameState: _room!.gameState, players: updatedPlayers, host: host);
     }
     for (final player in newPlayers) {
       _game!.onPlayerJoin(
-          player: player, gameState: _room!.gameState, players: updatedPlayers);
+          player: player, gameState: _room!.gameState, players: updatedPlayers, host: host);
     }
   }
 
@@ -81,7 +81,7 @@ class GameManager {
       if (_reference == null) return;
       final players =
           playersSnapshot.docs.map((p) => Player.fromJson(p.data())).toList();
-      callPlayerEvents(players);
+      callPlayerEvents(players, _room!.host);
       _room!.players = players;
       updateRoomData();
     });
@@ -110,7 +110,7 @@ class GameManager {
     if (_reference != null) return false;
     _room = Room.createRoom(game: _game!, player: player);
     _reference =
-        await FirebaseFirestore.instance.collection(collectionName).add({});
+        await FirebaseFirestore.instance.collection(collectionName).add({"host": player.toJson()});
     setupStreams();
     await _reference!.collection(_playersCollectionName).add(player.toJson());
     updateRoomData();
@@ -126,10 +126,14 @@ class GameManager {
         .map((e) => Player.fromJson(e.data()))
         .toList();
     if (players.contains(player)) return false;
+    final room = (await reference.get()).data();
+    if (room == null) return false;
+
     _room = Room.joinRoom(
         player: player,
         game: _game!,
         players: players,
+        host: Player.fromJson(room["host"]),
         events: (await reference.collection(_eventsCollectionName).get())
             .docs
             .map((e) => e.data())
