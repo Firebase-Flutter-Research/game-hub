@@ -10,7 +10,6 @@ class TicTacToe extends Game {
   // Return game state before moves are performed.
   @override
   Map<String, dynamic> getInitialGameState({required List<Player> players, required Player host}) {
-    print(host.name);
     return {"currentPlayer": 0, "board": List.filled(9, -1)};
   }
 

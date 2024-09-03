@@ -51,11 +51,12 @@ class GameManager {
     return FirebaseFirestore.instance.collection(collectionName).snapshots();
   }
 
-  void callPlayerEvents(List<Player> updatedPlayers, Player host) {
+  void callPlayerEvents(List<Player> updatedPlayers) {
     final oldPlayersSet = _room!.players.toSet();
     final updatedPlayersSet = updatedPlayers.toSet();
     final deletedPlayers = oldPlayersSet.difference(updatedPlayersSet);
     final newPlayers = updatedPlayersSet.difference(oldPlayersSet);
+    final host = _room!.host;
     for (final player in deletedPlayers) {
       _game!.onPlayerLeave(
           player: player, gameState: _room!.gameState, players: updatedPlayers, host: host);
@@ -81,7 +82,7 @@ class GameManager {
       if (_reference == null) return;
       final players =
           playersSnapshot.docs.map((p) => Player.fromJson(p.data())).toList();
-      callPlayerEvents(players, _room!.host);
+      callPlayerEvents(players);
       _room!.players = players;
       updateRoomData();
     });
