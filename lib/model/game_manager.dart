@@ -23,7 +23,7 @@ class GameManager {
   DocumentReference<Map<String, dynamic>>? _reference;
   Stream<QuerySnapshot<Map<String, dynamic>>>? _playersStream;
   Stream<QuerySnapshot<Map<String, dynamic>>>? _eventsStream;
-  int? _lastProcessedTimestamp;
+  Timestamp? _lastProcessedTimestamp;
   void Function(Map<String, dynamic>)? _onGameEnd;
 
   GameManager({required this.player});
@@ -60,11 +60,17 @@ class GameManager {
     final host = _room!.host;
     for (final player in deletedPlayers) {
       _game!.onPlayerLeave(
-          player: player, gameState: _room!.gameState, players: updatedPlayers, host: host);
+          player: player,
+          gameState: _room!.gameState,
+          players: updatedPlayers,
+          host: host);
     }
     for (final player in newPlayers) {
       _game!.onPlayerJoin(
-          player: player, gameState: _room!.gameState, players: updatedPlayers, host: host);
+          player: player,
+          gameState: _room!.gameState,
+          players: updatedPlayers,
+          host: host);
     }
   }
 
@@ -89,14 +95,16 @@ class GameManager {
     });
     _eventsStream!.listen((eventsSnapshot) {
       if (_reference == null) return;
-      final events = eventsSnapshot.docs
-          .map((e) => e.data())
-          .where((e) => e[_timestampName] > (_lastProcessedTimestamp ?? 0))
-          .toList();
-      for (final event in events) {
+      final events = eventsSnapshot.docs.map((e) => e.data()).toList()
+        ..sort((a, b) => a[_timestampName].compareTo(b[_timestampName]));
+      final filteredEvents = events.where((e) =>
+          e[_timestampName].compareTo(_lastProcessedTimestamp ??
+              Timestamp.fromMillisecondsSinceEpoch(0)) >
+          0);
+      for (final event in filteredEvents) {
         _room!.processEvent(event);
       }
-      _lastProcessedTimestamp = DateTime.timestamp().millisecondsSinceEpoch;
+      _lastProcessedTimestamp = events.lastOrNull?[_timestampName];
       _room!.events = events;
       updateRoomData();
       final log = _room!.checkGameEnd();
@@ -111,8 +119,9 @@ class GameManager {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
     if (_reference != null) return false;
     _room = Room.createRoom(game: _game!, player: player);
-    _reference =
-        await FirebaseFirestore.instance.collection(collectionName).add({"host": player.toJson()});
+    _reference = await FirebaseFirestore.instance
+        .collection(collectionName)
+        .add({"host": player.toJson()});
     setupStreams();
     await _reference!.collection(_playersCollectionName).add(player.toJson());
     updateRoomData();
@@ -182,8 +191,9 @@ class GameManager {
       }
       return checkResult;
     }
-    await _reference!.collection(_eventsCollectionName).add(event
-      ..addAll({_timestampName: DateTime.timestamp().millisecondsSinceEpoch}));
+    await _reference!
+        .collection(_eventsCollectionName)
+        .add(event..addAll({_timestampName: DateTime.timestamp()}));
     return checkResult;
   }
 
