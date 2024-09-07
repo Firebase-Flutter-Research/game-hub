@@ -1,3 +1,4 @@
+import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/player.dart';
 import 'package:pair/pair.dart';
@@ -21,7 +22,8 @@ class TicTacToe extends Game {
 
   // Return game state before moves are performed.
   @override
-  Map<String, dynamic> getInitialGameState({required List<Player> players, required Player host}) {
+  Map<String, dynamic> getInitialGameState(
+      {required List<Player> players, required Player host}) {
     return {"currentPlayer": 0, "board": List.filled(9, -1)};
   }
 
@@ -48,11 +50,11 @@ class TicTacToe extends Game {
   // Process new event and return if it was successful.
   @override
   void processEvent(
-      {required Map<String, dynamic> event,
+      {required Event event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host}) {
-    gameState["board"][event["position"]] = gameState["currentPlayer"];
+    gameState["board"][event.payload["position"]] = gameState["currentPlayer"];
     gameState["currentPlayer"] += 1;
     gameState["currentPlayer"] %= players.length;
   }
