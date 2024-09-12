@@ -27,6 +27,25 @@ class _TicTacToePageState extends State<TicTacToePage> {
               title: Text(
                   log["draw"] ? "It's a draw!" : "${log['winnerName']} won!")));
     });
+    gameManager.setOnEventFailure((failure) {
+      if (failure.message != null) {
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(failure.message!)));
+      }
+    });
+    gameManager.setOnPlayerJoin((player) {
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+            SnackBar(content: Text("${player.name} joined the room")));
+    });
+    gameManager.setOnPlayerLeave((player) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text("${player.name} left the room")));
+    });
   }
 
   @override
