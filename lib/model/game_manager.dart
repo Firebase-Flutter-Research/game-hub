@@ -29,6 +29,10 @@ class GameManager {
   Stream<QuerySnapshot<Map<String, dynamic>>>? _eventsStream;
   Timestamp? _lastProcessedTimestamp;
   void Function(Map<String, dynamic>)? _onGameEnd;
+  void Function(Player)? _onPlayerJoin;
+  void Function(Player)? _onPlayerLeave;
+  void Function(Event)? _onEventProcess;
+  void Function(CheckResultFailure)? _onEventFailure;
 
   GameManager({required this.player});
 
@@ -63,6 +67,7 @@ class GameManager {
     final newPlayers = updatedPlayersSet.difference(oldPlayersSet);
     final host = _room!.host;
     for (final player in deletedPlayers) {
+      if (_onPlayerLeave != null) _onPlayerLeave!(player);
       _game!.onPlayerLeave(
           player: player,
           gameState: _room!.gameState,
@@ -70,6 +75,7 @@ class GameManager {
           host: host);
     }
     for (final player in newPlayers) {
+      if (_onPlayerJoin != null) _onPlayerJoin!(player);
       _game!.onPlayerJoin(
           player: player,
           gameState: _room!.gameState,
@@ -119,6 +125,7 @@ class GameManager {
           0);
       for (final event in filteredEvents) {
         _room!.processEvent(event);
+        if (_onEventProcess != null) _onEventProcess!(event);
       }
       _lastProcessedTimestamp = events.lastOrNull?.timestamp;
       _room!.events = events;
@@ -227,6 +234,7 @@ class GameManager {
     }
     final checkResult = _room!.checkPerformEvent(event: event, player: player);
     if (checkResult is CheckResultFailure) {
+      if (_onEventFailure != null) _onEventFailure!(checkResult);
       if (kDebugMode) {
         print(checkResult.message);
       }
@@ -247,6 +255,22 @@ class GameManager {
 
   void setOnGameEnd(void Function(Map<String, dynamic>) callback) {
     _onGameEnd = callback;
+  }
+
+  void setOnPlayerJoin(void Function(Player) callback) {
+    _onPlayerJoin = callback;
+  }
+
+  void setOnPlayerLeave(void Function(Player) callback) {
+    _onPlayerLeave = callback;
+  }
+
+  void setOnEventProcess(void Function(Event) callback) {
+    _onEventProcess = callback;
+  }
+
+  void setOnEventFailure(void Function(CheckResultFailure) callback) {
+    _onEventFailure = callback;
   }
 
   void _createAndDisposeStream() {
