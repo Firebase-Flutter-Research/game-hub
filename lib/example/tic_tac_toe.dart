@@ -20,6 +20,10 @@ class TicTacToe extends Game {
   @override
   String get name => "Tic Tac Toe";
 
+  // Number of max allowed players
+  @override
+  int get playerLimit => 2;
+
   // Return game state before moves are performed.
   @override
   Map<String, dynamic> getInitialGameState(
