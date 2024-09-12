@@ -4,7 +4,7 @@ import 'package:flutter_fire_engine/model/player.dart';
 import 'package:pair/pair.dart';
 
 class NotPlayerTurn extends CheckResultFailure {
-  const NotPlayerTurn() : super("Not player's turn");
+  const NotPlayerTurn() : super("Not your turn");
 }
 
 class OutOfBounds extends CheckResultFailure {
@@ -19,6 +19,10 @@ class TicTacToe extends Game {
   // Game ID name
   @override
   String get name => "Tic Tac Toe";
+
+  // Number of max allowed players
+  @override
+  int get playerLimit => 2;
 
   // Return game state before moves are performed.
   @override
