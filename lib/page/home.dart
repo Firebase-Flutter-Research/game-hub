@@ -59,9 +59,10 @@ class _HomeState extends State<Home> {
               Expanded(
                   child: ElevatedButton(
                 onPressed: () async {
-                  await roomManager.createRoom();
-                  Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => TicTacToePage()));
+                  if (await roomManager.createRoom()) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => TicTacToePage()));
+                  }
                 },
                 child: const Text("Create Room"),
               ))
@@ -84,15 +85,13 @@ class _HomeState extends State<Home> {
           Expanded(
               child: ElevatedButton(
                   onPressed: () async {
-                    if (await gameManager.joinRoom(doc.reference)) {
+                    if (await gameManager.joinRoom(doc)) {
                       Navigator.of(context).push(MaterialPageRoute(
                           builder: (context) => TicTacToePage()));
                     }
                   },
-                  child: Text("${doc.data()?["host"]["name"]}'s Room")
-                  // child: Text(
-                  //     "${room.players.firstOrNull?.name} | ${room.players.length}/${gameManager.game?.maxPlayers} players"),
-                  ))
+                  child: Text(
+                      "${doc.data()?["host"]["name"]}'s Room (${doc.data()?["playerCount"]}/${gameManager.game!.playerLimit})")))
         ],
       ),
     );

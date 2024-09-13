@@ -17,12 +17,14 @@ class _TicTacToePageState extends State<TicTacToePage> {
   void initState() {
     super.initState();
     gameManager = GameManager.instance;
-    gameManager.setOnGameEnd((log) async {
+    gameManager.setOnLeave(() {
       Navigator.of(context).pop();
-      gameManager.leaveRoom();
+    });
+    gameManager.setOnGameStop((log) async {
+      if (log == null) return;
       showDialog(
           context: context,
-          useRootNavigator: false,
+          useRootNavigator: true,
           builder: (context) => AlertDialog(
               title: Text(
                   log["draw"] ? "It's a draw!" : "${log['winnerName']} won!")));
@@ -52,10 +54,9 @@ class _TicTacToePageState extends State<TicTacToePage> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (popped) async {
+      onPopInvoked: (popped) {
         if (popped) return;
-        await gameManager.leaveRoom();
-        Navigator.pop(context);
+        gameManager.leaveRoom();
       },
       child: Scaffold(
         appBar: AppBar(
@@ -66,26 +67,50 @@ class _TicTacToePageState extends State<TicTacToePage> {
             builder: (context, snapshot) {
               if (snapshot.data == null || !context.mounted) return Container();
               final roomData = snapshot.data!;
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!(roomData.gameState["hasRequiredPlayers"] ?? false))
-                      const Text("Waiting for more players..."),
-                    if (roomData.gameState["hasRequiredPlayers"] ?? false)
-                      Column(
-                        children: [
-                          Text(
-                              "It is ${roomData.gameState["currentPlayer"] < roomData.players.length ? roomData.players[roomData.gameState["currentPlayer"]].name : "No one"}'s turn"),
-                          _tableWidget(context, roomData),
-                        ],
-                      ),
-                  ],
-                ),
-              );
+              if (!roomData.gameStarted) return _lobbyWidget(context, roomData);
+              return _gameWidget(context, roomData);
             }),
       ),
     );
+  }
+
+  Widget _lobbyWidget(BuildContext context, RoomData roomData) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!roomData.hasRequiredPlayers)
+            Text(
+                "Waiting for more players... (${roomData.players.length}/${roomData.game.playerLimit})"),
+          if (roomData.hasRequiredPlayers)
+            Column(
+              children: [
+                const Text("Player requirement has been met."),
+                if (gameManager.player == roomData.host)
+                  TextButton(
+                      onPressed: () {
+                        gameManager.startGame();
+                      },
+                      child: const Text("Start")),
+                if (gameManager.player != roomData.host)
+                  const Text("Waiting for host to start..."),
+              ],
+            )
+        ],
+      ),
+    );
+  }
+
+  Widget _gameWidget(BuildContext context, RoomData roomData) {
+    return Center(
+        child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+            "It is ${roomData.gameState!["currentPlayer"] < roomData.players.length ? roomData.players[roomData.gameState!["currentPlayer"]].name : "No one"}'s turn"),
+        _tableWidget(context, roomData),
+      ],
+    ));
   }
 
   Widget _tableWidget(BuildContext context, RoomData roomData) {
@@ -95,7 +120,7 @@ class _TicTacToePageState extends State<TicTacToePage> {
       rows.add(Row(
           mainAxisSize: MainAxisSize.min,
           children: joinWidgets(
-              List<int>.from(roomData.gameState["board"])
+              List<int>.from(roomData.gameState!["board"])
                   .sublist(i, i + 3)
                   .mapIndexed((j, e) => Padding(
                         padding: const EdgeInsets.all(4.0),
@@ -105,7 +130,7 @@ class _TicTacToePageState extends State<TicTacToePage> {
                           child: TextButton(
                               onPressed: () async {
                                 await gameManager
-                                    .performEvent({"position": i + j});
+                                    .sendGameEvent({"position": i + j});
                               },
                               child: e == -1
                                   ? const Text("")
