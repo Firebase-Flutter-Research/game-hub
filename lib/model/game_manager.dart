@@ -12,8 +12,9 @@ class GameManager {
   static const _eventsCollectionName = "Events";
   static const _eventLimit = 100;
 
-  static final _gameManager =
-      GameManager(player: Player(id: Random().nextInt(0x80000000)));
+  static get random => Random().nextInt(0xFFFFFFFF);
+
+  static final _gameManager = GameManager(player: Player(id: random));
 
   final Player player;
   var _roomDataStreamController = StreamController<RoomData>();
@@ -24,7 +25,6 @@ class GameManager {
   DocumentReference<Map<String, dynamic>>? _concatenatedEventReference;
   Stream<QuerySnapshot<Map<String, dynamic>>>? _eventStream;
   Stream<DocumentSnapshot<Map<String, dynamic>>>? _roomStream;
-  Timestamp? _lastProcessedTimestamp;
   bool _readingLiveEvents = false;
   Completer<bool>? _joinRoomResponse;
   Timer? _joinRoomTimeout;
@@ -93,7 +93,6 @@ class GameManager {
     }
 
     _createAndDisposeStream();
-    _lastProcessedTimestamp = null;
 
     _roomStream = _roomReference!.snapshots();
     _roomStream!.listen((roomSnapshot) async {
@@ -108,23 +107,22 @@ class GameManager {
       _concatenatedEventReference =
           _findCurrentConcatenation(eventSnapshots.docs);
       final events = _fromConcatenatedEvents(
-          eventSnapshots.docs.map((e) => e.data()).toList())
+          eventSnapshots.docs.map((e) => e.data()).toList());
+      final filteredEvents = events
+          .toSet()
+          .difference(_room!.events.toSet())
+          .toList()
         ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-      final filteredEvents = events.where((e) =>
-          e.timestamp.compareTo(_lastProcessedTimestamp ??
-              Timestamp.fromMillisecondsSinceEpoch(0)) >
-          0);
 
       for (final event in filteredEvents) {
         _processEvent(event);
       }
-      _lastProcessedTimestamp = events.lastOrNull?.timestamp;
 
       if (_roomReference == null || _room == null) {
         return; // Check again after processing events
       }
 
-      _room!.events = events;
+      _room!.events.addAll(filteredEvents);
       _updateRoomData();
 
       final log = _room!.checkGameEnd();
@@ -139,7 +137,7 @@ class GameManager {
   // Create a new room and join it.
   Future<bool> createRoom() async {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
-    if (_roomReference != null && _room != null) return false;
+    if (_roomReference != null || _room != null) return false;
     _room = Room.createRoom(game: _game!, host: player);
     _roomReference = await FirebaseFirestore.instance
         .collection(_collectionName)
@@ -157,7 +155,7 @@ class GameManager {
   // Join a room from a Firebase document.
   Future<bool> joinRoom(DocumentSnapshot<Map<String, dynamic>> room) async {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
-    if (_roomReference != null && _room != null) return false;
+    if (_roomReference != null || _room != null) return false;
     final eventDocs =
         (await room.reference.collection(_eventsCollectionName).get()).docs;
     _concatenatedEventReference = _findCurrentConcatenation(eventDocs);
@@ -222,7 +220,6 @@ class GameManager {
 
     _room = null;
     _eventStream = null;
-    _lastProcessedTimestamp = null;
     _joinRoomResponse = null;
   }
 
@@ -280,6 +277,7 @@ class GameManager {
     _concatenatedEventReference!.update({
       "events": FieldValue.arrayUnion([
         Event(
+                id: random,
                 type: type,
                 timestamp: Timestamp.now(),
                 author: player,
@@ -337,7 +335,6 @@ class GameManager {
     _roomReference = null;
     _room = null;
     _eventStream = null;
-    _lastProcessedTimestamp = null;
     if (_joinRoomResponse != null && !_joinRoomResponse!.isCompleted) {
       _joinRoomResponse!.complete(false);
     }

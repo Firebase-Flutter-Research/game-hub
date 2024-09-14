@@ -18,9 +18,11 @@ class _TicTacToePageState extends State<TicTacToePage> {
     super.initState();
     gameManager = GameManager.instance;
     gameManager.setOnLeave(() {
+      if (!context.mounted) return;
       Navigator.of(context).popUntil(ModalRoute.withName('/'));
     });
     gameManager.setOnGameStop((log) async {
+      if (!context.mounted) return;
       if (log == null) return;
       showDialog(
           context: context,
@@ -30,6 +32,7 @@ class _TicTacToePageState extends State<TicTacToePage> {
                   log["draw"] ? "It's a draw!" : "${log['winnerName']} won!")));
     });
     gameManager.setOnEventFailure((failure) {
+      if (!context.mounted) return;
       if (failure.message != null) {
         ScaffoldMessenger.of(context)
           ..removeCurrentSnackBar()
@@ -44,11 +47,13 @@ class _TicTacToePageState extends State<TicTacToePage> {
             SnackBar(content: Text("${player.name} joined the room")));
     });
     gameManager.setOnPlayerLeave((player) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text("${player.name} left the room")));
     });
     gameManager.setOnHostLeave(() {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(const SnackBar(

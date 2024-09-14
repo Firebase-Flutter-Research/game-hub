@@ -19,18 +19,21 @@ enum EventType {
 }
 
 class Event {
+  final int id;
   final EventType type;
   final Timestamp timestamp;
   final Player author;
   final Map<String, dynamic>? payload;
 
   const Event(
-      {required this.type,
+      {required this.id,
+      required this.type,
       required this.timestamp,
       required this.author,
       required this.payload});
 
   Map<String, dynamic> toJson() => {
+        "id": id,
         "type": type.key,
         "timestamp": timestamp,
         "author": author.toJson(),
@@ -38,9 +41,18 @@ class Event {
       };
 
   static Event fromJson(Map<String, dynamic> json) => Event(
+        id: json["id"],
         type: EventType.fromKey(json["type"]),
         timestamp: json["timestamp"],
         author: Player.fromJson(json["author"]),
         payload: json["payload"],
       );
+
+  @override
+  bool operator ==(Object other) {
+    return other is Event && id == other.id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
