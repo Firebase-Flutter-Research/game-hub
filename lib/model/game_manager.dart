@@ -11,6 +11,7 @@ class GameManager {
   static const _collectionPrefix = "Rooms";
   static const _eventsCollectionName = "Events";
   static const _eventLimit = 100;
+  static const _timeoutSeconds = 5;
 
   static get random => Random().nextInt(0xFFFFFFFF);
 
@@ -168,7 +169,7 @@ class GameManager {
     await _sendEvent(EventType.playerJoinRequest);
 
     // Process as join denied if timeout
-    _joinRoomTimeout = Timer(const Duration(seconds: 5), () {
+    _joinRoomTimeout = Timer(const Duration(seconds: _timeoutSeconds), () {
       if (_joinRoomResponse != null &&
           !_joinRoomResponse!.isCompleted &&
           _roomReference != null &&
@@ -294,7 +295,7 @@ class GameManager {
       case EventType.gameEvent:
         return _processGameEvent(event);
       case EventType.playerJoinRequest:
-        return _processPlayerJoinRequestEvent(event.author);
+        return _processPlayerJoinRequestEvent(event.author, event.timestamp);
       case EventType.playerJoinDenied:
         return _processPlayerJoinDeniedEvent(
             Player.fromJson(event.payload!["player"]!));
@@ -317,8 +318,10 @@ class GameManager {
     }
   }
 
-  void _processPlayerJoinRequestEvent(Player player) async {
+  void _processPlayerJoinRequestEvent(
+      Player player, Timestamp timestamp) async {
     if (this.player != _room!.host) return;
+    if (Timestamp.now().seconds >= timestamp.seconds + _timeoutSeconds) return;
     if (_room!.gameStarted || _room!.players.length >= _game!.playerLimit) {
       await _sendEvent(EventType.playerJoinDenied, {"player": player.toJson()});
       return;
