@@ -56,9 +56,16 @@ class Room {
     players.remove(player);
   }
 
-  void startGame() {
-    if (gameStarted || !hasRequiredPlayers) return;
+  bool startGame() {
+    if (gameStarted || !hasRequiredPlayers) return false;
     gameState = game.getInitialGameState(players: players, host: host);
+    return true;
+  }
+
+  bool stopGame() {
+    if (!gameStarted) return false;
+    gameState = null;
+    return true;
   }
 
   CheckResult checkPerformEvent(
@@ -89,11 +96,6 @@ class Room {
     if (!gameStarted) return null;
     return game.checkGameEnd(
         gameState: gameState!, players: players, host: host);
-  }
-
-  void stopGame() {
-    if (!gameStarted) return;
-    gameState = null;
   }
 
   RoomData getRoomData() {

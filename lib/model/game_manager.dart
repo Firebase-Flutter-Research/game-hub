@@ -261,6 +261,7 @@ class GameManager {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
     if (_room == null || _roomReference == null) return;
     if (player != _room!.host) return;
+    if (_room!.gameStarted || !_room!.hasRequiredPlayers) return;
     await _sendEvent(EventType.gameStart);
   }
 
@@ -269,6 +270,7 @@ class GameManager {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
     if (_room == null || _roomReference == null) return;
     if (player != _room!.host) return;
+    if (!_room!.gameStarted) return;
     await _sendEvent(EventType.gameStop, log);
   }
 
@@ -371,13 +373,15 @@ class GameManager {
   }
 
   void _processGameStartEvent() async {
-    _room!.startGame();
-    if (_onGameStart != null && _readingLiveEvents) _onGameStart!();
+    if (_room!.startGame()) {
+      if (_onGameStart != null && _readingLiveEvents) _onGameStart!();
+    }
   }
 
   void _processGameStopEvent(Map<String, dynamic>? log) async {
-    _room!.stopGame();
-    if (_onGameStop != null && _readingLiveEvents) _onGameStop!(log);
+    if (_room!.stopGame()) {
+      if (_onGameStop != null && _readingLiveEvents) _onGameStop!(log);
+    }
   }
 
   // Pass event function to be called when a player joins.
