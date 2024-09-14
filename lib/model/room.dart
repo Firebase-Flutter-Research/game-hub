@@ -47,10 +47,12 @@ class Room {
   }
 
   void joinRoom(Player player) {
+    if (players.contains(player)) return;
     players.add(player);
   }
 
   void leaveRoom(Player player) {
+    if (!players.contains(player)) return;
     players.remove(player);
   }
 

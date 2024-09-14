@@ -3,7 +3,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -16,7 +15,13 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    GameManager.instance.setGame(TicTacToe());
+    final gameManager = GameManager.instance;
+    gameManager.setGame(TicTacToe());
+    gameManager.setOnPlayerJoinDenied(() {
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text("Cannot join room")));
+    });
   }
 
   @override
@@ -60,8 +65,7 @@ class _HomeState extends State<Home> {
                   child: ElevatedButton(
                 onPressed: () async {
                   if (await roomManager.createRoom()) {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => TicTacToePage()));
+                    Navigator.of(context).pushNamed("/ticTacToe");
                   }
                 },
                 child: const Text("Create Room"),
@@ -86,8 +90,7 @@ class _HomeState extends State<Home> {
               child: ElevatedButton(
                   onPressed: () async {
                     if (await gameManager.joinRoom(doc)) {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => TicTacToePage()));
+                      Navigator.of(context).pushNamed("/ticTacToe");
                     }
                   },
                   child: Text(

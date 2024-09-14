@@ -26,38 +26,48 @@ class GameManager {
   Stream<DocumentSnapshot<Map<String, dynamic>>>? _roomStream;
   Timestamp? _lastProcessedTimestamp;
   bool _readingLiveEvents = false;
+  Completer<bool>? _joinRoomResponse;
+  Timer? _joinRoomTimeout;
 
   void Function(Player)? _onPlayerJoin;
-  void Function()? _onJoin;
+  void Function()? _onPlayerJoinDenied;
   void Function(Player)? _onPlayerLeave;
   void Function()? _onLeave;
-  void Function(Event)? _onEventProcessed;
+  void Function(Player, Map<String, dynamic>)? _onGameEvent;
   void Function(CheckResultFailure)? _onEventFailure;
   void Function()? _onGameStart;
   void Function(Map<String, dynamic>?)? _onGameStop;
-  void Function()? _onRoomDeletedCallback;
+  void Function()? _onHostLeave;
 
   GameManager({required this.player});
 
+  // Get global device GameManager instance.
   static GameManager get instance => _gameManager;
 
   String get _collectionName => "$_collectionPrefix:${_game?.name}";
 
+  // Get stream to read RoomData changes.
   Stream<RoomData> get roomDataStream => _roomDataStreamController.stream;
+
+  // Get currently assigned game.
   Game? get game => _game;
 
+  // Assign game.
   void setGame(Game game) {
     _game = game;
   }
 
+  // Check if a game has been assigned.
   bool hasGame() {
     return _game != null;
   }
 
+  // Set player's name.
   void setPlayerName(String name) {
     player.name = name;
   }
 
+  // Get stream of rooms from Firebase.
   Stream<QuerySnapshot<Map<String, dynamic>>> getRooms() {
     if (_game == null) throw Exception("Game has not been set");
     return FirebaseFirestore.instance.collection(_collectionName).snapshots();
@@ -83,6 +93,7 @@ class GameManager {
     }
 
     _createAndDisposeStream();
+    _lastProcessedTimestamp = null;
 
     _roomStream = _roomReference!.snapshots();
     _roomStream!.listen((roomSnapshot) async {
@@ -92,7 +103,7 @@ class GameManager {
     _eventStream =
         _roomReference!.collection(_eventsCollectionName).snapshots();
     _eventStream!.listen((eventSnapshots) async {
-      if (_roomReference == null) return;
+      if (_roomReference == null || _room == null) return;
 
       _concatenatedEventReference =
           _findCurrentConcatenation(eventSnapshots.docs);
@@ -109,6 +120,10 @@ class GameManager {
       }
       _lastProcessedTimestamp = events.lastOrNull?.timestamp;
 
+      if (_roomReference == null || _room == null) {
+        return; // Check again after processing events
+      }
+
       _room!.events = events;
       _updateRoomData();
 
@@ -121,48 +136,50 @@ class GameManager {
     });
   }
 
-  Future<bool> _sendRoomJoinEvent(
-      DocumentSnapshot<Map<String, dynamic>> room) async {
-    if (_game == null) throw Exception("Game not found. Ensure game is set.");
-    if (room.data() == null ||
-        room.data()!["playerCount"] >= _game!.playerLimit) {
-      return false;
-    }
-    await _sendEvent(EventType.playerJoin);
-    await room.reference.update({"playerCount": FieldValue.increment(1)});
-    return true;
-  }
-
+  // Create a new room and join it.
   Future<bool> createRoom() async {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
-    if (_roomReference != null) return false;
+    if (_roomReference != null && _room != null) return false;
     _room = Room.createRoom(game: _game!, host: player);
     _roomReference = await FirebaseFirestore.instance
         .collection(_collectionName)
-        .add({"host": player.toJson(), "playerCount": 0, "gameStarted": false});
+        .add({"host": player.toJson(), "playerCount": 0});
     _concatenatedEventReference = await _createConcatenatedEvent();
     _setupStreams();
     _updateRoomData();
-    return await _sendRoomJoinEvent(await _roomReference!.get());
+    _readingLiveEvents = true;
+    _joinRoomResponse = Completer();
+    await _sendEvent(EventType.playerJoin, {"player": player.toJson()});
+    await _roomReference!.update({"playerCount": FieldValue.increment(1)});
+    return _joinRoomResponse!.future;
   }
 
+  // Join a room from a Firebase document.
   Future<bool> joinRoom(DocumentSnapshot<Map<String, dynamic>> room) async {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
-    if (_roomReference != null) return false;
-    if (room["gameStarted"]) return false;
+    if (_roomReference != null && _room != null) return false;
     final eventDocs =
         (await room.reference.collection(_eventsCollectionName).get()).docs;
     _concatenatedEventReference = _findCurrentConcatenation(eventDocs);
-    final success = await _sendRoomJoinEvent(room);
-    if (!success) return false;
-    if (_roomReference != null) return false; // Check again for async gap
     _room = Room.createRoom(game: _game!, host: Player.fromJson(room["host"]));
     _roomReference = room.reference;
     _setupStreams();
     _updateRoomData();
-    if (_onJoin != null && _readingLiveEvents) _onJoin!();
     _readingLiveEvents = false;
-    return true;
+    _joinRoomResponse = Completer();
+    await _sendEvent(EventType.playerJoinRequest);
+
+    // Process as join denied if timeout
+    _joinRoomTimeout = Timer(const Duration(seconds: 5), () {
+      if (_joinRoomResponse != null &&
+          !_joinRoomResponse!.isCompleted &&
+          _roomReference != null &&
+          _room != null) {
+        _processPlayerJoinDeniedEvent(player);
+      }
+    });
+
+    return _joinRoomResponse!.future;
   }
 
   Future<DocumentReference<Map<String, dynamic>>>
@@ -182,6 +199,7 @@ class GameManager {
     return null;
   }
 
+  // Leave current room.
   Future<void> leaveRoom() async {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
     if (_room == null || _roomReference == null) {
@@ -192,21 +210,23 @@ class GameManager {
     _roomReference = null;
 
     _room!.leaveRoom(player);
-    if (_room!.host == player) await deleteRoom(roomReference);
 
     if ((await roomReference.get()).exists) {
       await _sendEvent(EventType.playerLeave);
       await roomReference.update({"playerCount": FieldValue.increment(-1)});
     }
 
-    _eventStream = null;
-    _room = null;
-    _lastProcessedTimestamp = null;
+    if (_room!.host == player) await _deleteRoom(roomReference);
 
     if (_onLeave != null && _readingLiveEvents) _onLeave!();
+
+    _room = null;
+    _eventStream = null;
+    _lastProcessedTimestamp = null;
+    _joinRoomResponse = null;
   }
 
-  Future<void> deleteRoom(
+  Future<void> _deleteRoom(
       DocumentReference<Map<String, dynamic>> reference) async {
     final events = await reference.collection(_eventsCollectionName).get();
     for (var event in events.docs) {
@@ -217,11 +237,9 @@ class GameManager {
 
   Future<void> _onRoomDeleted() async {
     await leaveRoom();
-    if (_onRoomDeletedCallback != null && _readingLiveEvents) {
-      _onRoomDeletedCallback!();
-    }
   }
 
+  // Send event to be processed by the game rules. Takes a payload json as input and returns a result.
   Future<CheckResult> sendGameEvent(Map<String, dynamic> event) async {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
     if (_room == null || _roomReference == null) {
@@ -238,20 +256,20 @@ class GameManager {
     return checkResult;
   }
 
+  // Start a game. Can only be called by the host.
   Future<void> startGame() async {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
     if (_room == null || _roomReference == null) return;
     if (player != _room!.host) return;
     await _sendEvent(EventType.gameStart);
-    await _roomReference!.update({"gameStarted": true});
   }
 
+  // Stop the current game. Can only be called by the host.
   Future<void> stopGame([Map<String, dynamic>? log]) async {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
     if (_room == null || _roomReference == null) return;
     if (player != _room!.host) return;
     await _sendEvent(EventType.gameStop, log);
-    await _roomReference!.update({"gameStarted": false});
   }
 
   Future<void> _sendEvent(EventType type,
@@ -271,12 +289,18 @@ class GameManager {
 
   void _processEvent(Event event) {
     if (_game == null) throw Exception("Game not found. Ensure game is set.");
-    if (_room == null) return;
+    if (_roomReference == null || _room == null) return;
     switch (event.type) {
       case EventType.gameEvent:
         return _processGameEvent(event);
+      case EventType.playerJoinRequest:
+        return _processPlayerJoinRequestEvent(event.author);
+      case EventType.playerJoinDenied:
+        return _processPlayerJoinDeniedEvent(
+            Player.fromJson(event.payload!["player"]!));
       case EventType.playerJoin:
-        return _processPlayerJoinEvent(event.author);
+        return _processPlayerJoinEvent(
+            Player.fromJson(event.payload!["player"]!));
       case EventType.playerLeave:
         return _processPlayerLeaveEvent(event.author);
       case EventType.gameStart:
@@ -288,9 +312,34 @@ class GameManager {
 
   void _processGameEvent(Event event) async {
     _room!.processEvent(event);
-    if (_onEventProcessed != null && _readingLiveEvents) {
-      _onEventProcessed!(event);
+    if (_onGameEvent != null && _readingLiveEvents) {
+      _onGameEvent!(event.author, event.payload!);
     }
+  }
+
+  void _processPlayerJoinRequestEvent(Player player) async {
+    if (this.player != _room!.host) return;
+    if (_room!.gameStarted || _room!.players.length >= _game!.playerLimit) {
+      await _sendEvent(EventType.playerJoinDenied, {"player": player.toJson()});
+      return;
+    }
+    _room!.joinRoom(player);
+    await _sendEvent(EventType.playerJoin, {"player": player.toJson()});
+    await _roomReference!.update({"playerCount": FieldValue.increment(1)});
+  }
+
+  void _processPlayerJoinDeniedEvent(Player player) async {
+    if (this.player != player) return;
+    if (_room!.players.contains(player)) return;
+    if (!_readingLiveEvents) return;
+    _roomReference = null;
+    _room = null;
+    _eventStream = null;
+    _lastProcessedTimestamp = null;
+    if (_joinRoomResponse != null && !_joinRoomResponse!.isCompleted) {
+      _joinRoomResponse!.complete(false);
+    }
+    if (_onPlayerJoinDenied != null) _onPlayerJoinDenied!();
   }
 
   void _processPlayerJoinEvent(Player player) async {
@@ -298,17 +347,25 @@ class GameManager {
     if (_onPlayerJoin != null && this.player != player && _readingLiveEvents) {
       _onPlayerJoin!(player);
     }
+    if (_readingLiveEvents &&
+        this.player == player &&
+        _joinRoomResponse != null &&
+        !_joinRoomResponse!.isCompleted) {
+      _joinRoomResponse!.complete(true);
+      if (_joinRoomTimeout != null) _joinRoomTimeout!.cancel();
+    }
   }
 
   void _processPlayerLeaveEvent(Player player) async {
     _room!.leaveRoom(player);
-    if (_onPlayerLeave != null && this.player != player && _readingLiveEvents) {
-      _onPlayerLeave!(player);
+    if (_readingLiveEvents && this.player != player) {
+      if (player == _room!.host) {
+        if (_onHostLeave != null) _onHostLeave!();
+      } else {
+        if (_onPlayerLeave != null) _onPlayerLeave!(player);
+      }
     }
-    if (_room!.players.isEmpty) {
-      await deleteRoom(_roomReference!);
-    }
-    if (!_room!.hasRequiredPlayers) {
+    if (_room!.gameStarted && !_room!.hasRequiredPlayers) {
       await stopGame();
     }
   }
@@ -323,40 +380,49 @@ class GameManager {
     if (_onGameStop != null && _readingLiveEvents) _onGameStop!(log);
   }
 
+  // Pass event function to be called when a player joins.
   void setOnPlayerJoin(void Function(Player) callback) {
     _onPlayerJoin = callback;
   }
 
-  void setOnJoin(void Function() callback) {
-    _onJoin = callback;
+  // Pass event function to be called when a player is denied joining.
+  void setOnPlayerJoinDenied(void Function() callback) {
+    _onPlayerJoinDenied = callback;
   }
 
+  // Pass event function to be called when a player leaves.
   void setOnPlayerLeave(void Function(Player) callback) {
     _onPlayerLeave = callback;
   }
 
+  // Pass event function to be called when you leave.
   void setOnLeave(void Function() callback) {
     _onLeave = callback;
   }
 
-  void setOnEventProcess(void Function(Event) callback) {
-    _onEventProcessed = callback;
+  // Pass event function to be called when a game event has been received.
+  void setOnGameEvent(void Function(Player, Map<String, dynamic>) callback) {
+    _onGameEvent = callback;
   }
 
+  // Pass event function to be called when an event fails.
   void setOnEventFailure(void Function(CheckResultFailure) callback) {
     _onEventFailure = callback;
   }
 
+  // Pass event function to be called when the game starts.
   void setOnGameStart(void Function() callback) {
     _onGameStart = callback;
   }
 
+  // Pass event function to be called when the game is stopped.
   void setOnGameStop(void Function(Map<String, dynamic>?) callback) {
     _onGameStop = callback;
   }
 
-  void setOnRoomDeleted(void Function() callback) {
-    _onRoomDeletedCallback = callback;
+  // Pass event function to be called when the room is deleted.
+  void setOnHostLeave(void Function() callback) {
+    _onHostLeave = callback;
   }
 
   void _createAndDisposeStream() {

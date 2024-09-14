@@ -18,7 +18,7 @@ class _TicTacToePageState extends State<TicTacToePage> {
     super.initState();
     gameManager = GameManager.instance;
     gameManager.setOnLeave(() {
-      Navigator.of(context).pop();
+      Navigator.of(context).popUntil(ModalRoute.withName('/'));
     });
     gameManager.setOnGameStop((log) async {
       if (log == null) return;
@@ -37,16 +37,22 @@ class _TicTacToePageState extends State<TicTacToePage> {
       }
     });
     gameManager.setOnPlayerJoin((player) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
             SnackBar(content: Text("${player.name} joined the room")));
     });
     gameManager.setOnPlayerLeave((player) {
-      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text("${player.name} left the room")));
+    });
+    gameManager.setOnHostLeave(() {
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(const SnackBar(
+            content: Text("Host has left the game and room has been closed")));
     });
   }
 
