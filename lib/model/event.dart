@@ -17,6 +17,15 @@ enum EventType {
       EventType.values.where((e) => e.key == key).first;
 }
 
+class GameEvent {
+  final Timestamp timestamp;
+  final Player author;
+  final Map<String, dynamic> payload;
+
+  const GameEvent(
+      {required this.timestamp, required this.author, required this.payload});
+}
+
 class Event {
   final int id;
   final EventType type;

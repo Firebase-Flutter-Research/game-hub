@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/firebase_room_communicator.dart';
 import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/player.dart';
@@ -131,7 +132,7 @@ class GameManager {
   }
 
   // Pass event function to be called when a game event has been received.
-  void setOnGameEvent(void Function(Player, Map<String, dynamic>) callback) {
+  void setOnGameEvent(void Function(GameEvent) callback) {
     if (_firebaseRoomCommunicator == null) return;
     _firebaseRoomCommunicator!.setOnGameEvent(callback);
   }

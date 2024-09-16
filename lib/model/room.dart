@@ -96,7 +96,7 @@ class Room {
         host: host);
   }
 
-  void processEvent(Event event) {
+  void processEvent(GameEvent event) {
     if (!gameStarted) return;
     game.processEvent(
         event: event, gameState: gameState!, players: players, host: host);

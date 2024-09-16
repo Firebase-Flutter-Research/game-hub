@@ -39,7 +39,7 @@ abstract class Game {
 
   // Process new event and return if it was successful.
   void processEvent(
-      {required Event event,
+      {required GameEvent event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host});

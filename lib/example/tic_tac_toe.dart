@@ -58,12 +58,11 @@ class TicTacToe extends Game {
   // Process new event and return if it was successful.
   @override
   void processEvent(
-      {required Event event,
+      {required GameEvent event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host}) {
-    if (event.payload == null) return;
-    gameState["board"][event.payload!["position"]] = gameState["currentPlayer"];
+    gameState["board"][event.payload["position"]] = gameState["currentPlayer"];
     gameState["currentPlayer"] += 1;
     gameState["currentPlayer"] %= players.length;
   }

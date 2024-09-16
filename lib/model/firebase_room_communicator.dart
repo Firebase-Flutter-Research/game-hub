@@ -30,7 +30,7 @@ class FirebaseRoomCommunicator {
   void Function(Player)? _onPlayerJoin;
   void Function(Player)? _onPlayerLeave;
   void Function()? _onLeave;
-  void Function(Player, Map<String, dynamic>)? _onGameEvent;
+  void Function(GameEvent)? _onGameEvent;
   void Function(CheckResultFailure)? _onGameEventFailure;
   void Function()? _onGameStart;
   void Function(CheckResultFailure)? _onGameStartFailure;
@@ -237,7 +237,10 @@ class FirebaseRoomCommunicator {
   void _processEvent(Event event) {
     switch (event.type) {
       case EventType.gameEvent:
-        return _processGameEvent(event);
+        return _processGameEvent(GameEvent(
+            timestamp: event.timestamp,
+            author: event.author,
+            payload: event.payload!));
       case EventType.playerJoin:
         return _processPlayerJoinEvent(event.author);
       case EventType.playerLeave:
@@ -255,10 +258,10 @@ class FirebaseRoomCommunicator {
     }
   }
 
-  void _processGameEvent(Event event) async {
+  void _processGameEvent(GameEvent event) async {
     room.processEvent(event);
     if (_onGameEvent != null && _readingLiveEvents) {
-      _onGameEvent!(event.author, event.payload!);
+      _onGameEvent!(event);
     }
     final log = room.checkGameEnd();
     if (log != null) {
@@ -317,7 +320,7 @@ class FirebaseRoomCommunicator {
     _onLeave = callback;
   }
 
-  void setOnGameEvent(void Function(Player, Map<String, dynamic>) callback) {
+  void setOnGameEvent(void Function(GameEvent) callback) {
     _onGameEvent = callback;
   }
 
