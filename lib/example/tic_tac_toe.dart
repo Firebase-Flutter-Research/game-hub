@@ -20,6 +20,10 @@ class TicTacToe extends Game {
   @override
   String get name => "Tic Tac Toe";
 
+  // Count of required players to play
+  @override
+  int get requiredPlayers => 2;
+
   // Number of max allowed players
   @override
   int get playerLimit => 2;
@@ -54,23 +58,13 @@ class TicTacToe extends Game {
   // Process new event and return if it was successful.
   @override
   void processEvent(
-      {required Event event,
+      {required GameEvent event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host}) {
     gameState["board"][event.payload["position"]] = gameState["currentPlayer"];
     gameState["currentPlayer"] += 1;
     gameState["currentPlayer"] %= players.length;
-  }
-
-  // Handle when new player joins.
-  @override
-  void onPlayerJoin(
-      {required Player player,
-      required Map<String, dynamic> gameState,
-      required List<Player> players,
-      required Player host}) {
-    if (players.length >= 2) gameState["hasRequiredPlayers"] = true;
   }
 
   // Handle when player leaves room.
