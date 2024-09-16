@@ -27,6 +27,7 @@ class RoomData {
 
   bool get gameStarted => gameState != null;
   bool get hasRequiredPlayers => players.length >= game.requiredPlayers;
+  bool get isOvercapacity => players.length > game.playerLimit;
 
   const RoomData(
       {required this.game,
