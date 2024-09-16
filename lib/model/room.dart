@@ -6,6 +6,18 @@ class GameHasNotStarted extends CheckResultFailure {
   const GameHasNotStarted() : super("Game has not been started");
 }
 
+class GameHasStarted extends CheckResultFailure {
+  const GameHasStarted() : super("Game has already been started");
+}
+
+class NotEnoughPlayers extends CheckResultFailure {
+  const NotEnoughPlayers() : super("Not enough players to start game");
+}
+
+class TooManyPlayers extends CheckResultFailure {
+  const TooManyPlayers() : super("There are too many players in the room");
+}
+
 class RoomData {
   final Game game;
   final List<Player> players;
@@ -56,10 +68,13 @@ class Room {
     players.remove(player);
   }
 
-  bool startGame() {
-    if (gameStarted || !hasRequiredPlayers) return false;
+  CheckResult startGame(List<Player> players) {
+    if (gameStarted) return const GameHasStarted();
+    if (!hasRequiredPlayers) return const NotEnoughPlayers();
+    if (players.length > game.playerLimit) return const TooManyPlayers();
+    this.players = players;
     gameState = game.getInitialGameState(players: players, host: host);
-    return true;
+    return const CheckResultSuccess();
   }
 
   bool stopGame() {

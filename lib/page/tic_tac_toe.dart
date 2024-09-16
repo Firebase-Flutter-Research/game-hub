@@ -31,7 +31,7 @@ class _TicTacToePageState extends State<TicTacToePage> {
               title: Text(
                   log["draw"] ? "It's a draw!" : "${log['winnerName']} won!")));
     });
-    gameManager.setOnEventFailure((failure) {
+    gameManager.setOnGameEventFailure((failure) {
       if (!context.mounted) return;
       if (failure.message != null) {
         ScaffoldMessenger.of(context)
@@ -52,12 +52,21 @@ class _TicTacToePageState extends State<TicTacToePage> {
         ..removeCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text("${player.name} left the room")));
     });
-    gameManager.setOnHostLeave(() {
+    gameManager.setOnHostReassigned((newHost, oldHost) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
-        ..showSnackBar(const SnackBar(
-            content: Text("Host has left the game and room has been closed")));
+        ..showSnackBar(SnackBar(
+            content: Text(
+                "${oldHost.name} has left the game. ${newHost.name} is now the host.")));
+    });
+    gameManager.setOnGameStartFailure((failure) {
+      if (!context.mounted) return;
+      if (failure.message != null) {
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(failure.message!)));
+      }
     });
   }
 

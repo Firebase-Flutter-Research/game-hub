@@ -3,12 +3,11 @@ import 'package:flutter_fire_engine/model/player.dart';
 
 enum EventType {
   gameEvent(key: "gameEvent"),
-  playerJoinRequest(key: "playerJoinRequest"),
-  playerJoinDenied(key: "playerJoinedDenied"),
   playerJoin(key: "playerJoin"),
   playerLeave(key: "playerLeave"),
   gameStart(key: "gameStart"),
-  gameStop(key: "gameStop");
+  gameStop(key: "gameStop"),
+  hostReassigned(key: "hostReassigned");
 
   final String key;
 

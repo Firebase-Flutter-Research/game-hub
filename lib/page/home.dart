@@ -17,11 +17,6 @@ class _HomeState extends State<Home> {
     super.initState();
     final gameManager = GameManager.instance;
     gameManager.setGame(TicTacToe());
-    gameManager.setOnPlayerJoinDenied(() {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text("Cannot join room")));
-    });
   }
 
   @override
