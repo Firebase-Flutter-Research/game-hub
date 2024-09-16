@@ -281,7 +281,7 @@ class FirebaseRoomCommunicator {
     if (_readingLiveEvents && this.player != player) {
       if (_onPlayerLeave != null) _onPlayerLeave!(player);
     }
-    if (room.gameStarted && !room.hasRequiredPlayers) {
+    if (room.gameStarted && (!room.hasRequiredPlayers || room.isOvercapacity)) {
       await stopGame();
     }
   }

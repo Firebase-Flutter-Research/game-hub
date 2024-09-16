@@ -52,6 +52,7 @@ class Room {
 
   bool get gameStarted => gameState != null;
   bool get hasRequiredPlayers => players.length >= game.requiredPlayers;
+  bool get isOvercapacity => players.length > game.playerLimit;
 
   static Room createRoom({required Player host, required Game game}) {
     return Room(
@@ -71,7 +72,7 @@ class Room {
   CheckResult startGame(List<Player> players) {
     if (gameStarted) return const GameHasStarted();
     if (!hasRequiredPlayers) return const NotEnoughPlayers();
-    if (players.length > game.playerLimit) return const TooManyPlayers();
+    if (isOvercapacity) return const TooManyPlayers();
     this.players = players;
     gameState = game.getInitialGameState(players: players, host: host);
     return const CheckResultSuccess();
