@@ -25,7 +25,7 @@ class _RoomsPageState extends State<RoomsPage> {
             controller: TextEditingController(text: gameManager.player.name),
             decoration: const InputDecoration(labelText: "Player Name"),
             onChanged: (value) {
-              gameManager.setPlayerName(value);
+              gameManager.setPlayerName(value.trim());
             },
           ),
           Expanded(
