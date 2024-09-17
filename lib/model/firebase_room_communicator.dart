@@ -47,12 +47,15 @@ class FirebaseRoomCommunicator {
 
     _eventStreamSubscription = roomReference
         .collection(_eventsCollectionName)
-        .snapshots()
+        .snapshots(
+            includeMetadataChanges: !game.ignoreSimultaneousEventOrdering)
         .listen((eventSnapshots) async {
       _updateConcatenatedEventReference(eventSnapshots.docs);
 
-      final events = _fromConcatenatedEvents(
-          eventSnapshots.docs.map((e) => e.data()).toList());
+      final filteredDocs = eventSnapshots.docs.where((e) =>
+          !e.metadata.hasPendingWrites || game.ignoreSimultaneousEventOrdering);
+      final events =
+          _fromConcatenatedEvents(filteredDocs.map((e) => e.data()).toList());
       final filteredEvents = events
           .toSet()
           .difference(room.events.toSet())
@@ -226,7 +229,7 @@ class FirebaseRoomCommunicator {
   Future<void> _sendEvent(EventType type,
       [Map<String, dynamic>? payload]) async {
     _concatenatedEventReference ??= await _createConcatenatedEvent();
-    _concatenatedEventReference!.update({
+    await _concatenatedEventReference!.update({
       "events": FieldValue.arrayUnion([
         Event(
                 id: Random().nextInt(0xFFFFFFFF),
