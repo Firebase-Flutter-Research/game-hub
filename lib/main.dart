@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/page/home.dart';
+import 'package:flutter_fire_engine/page/in_game.dart';
+import 'package:flutter_fire_engine/page/rooms.dart';
 import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
 
 void main() async {
@@ -31,7 +33,8 @@ class MyApp extends StatelessWidget {
       initialRoute: "/",
       routes: {
         "/": (context) => Home(),
-        "/ticTacToe": (context) => TicTacToePage(),
+        "/rooms": (context) => RoomsPage(),
+        "/inGame": (context) => InGamePage(),
       },
     );
   }

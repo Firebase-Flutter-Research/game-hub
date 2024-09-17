@@ -1,7 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
+import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 
 class Home extends StatefulWidget {
@@ -12,70 +11,35 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  // Add more games to game hub via this list.
+  List<Game> games = [TicTacToe()];
+
+  late GameManager gameManager;
+
   @override
   void initState() {
     super.initState();
-    final gameManager = GameManager.instance;
-    gameManager.setGame(TicTacToe());
+    gameManager = GameManager.instance;
   }
 
   @override
   Widget build(BuildContext context) {
-    final roomManager = GameManager.instance;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Select Room"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(children: [
-          TextField(
-            controller: TextEditingController(text: roomManager.player.name),
-            decoration: const InputDecoration(labelText: "Player Name"),
-            onChanged: (value) {
-              roomManager.setPlayerName(value);
-            },
-          ),
-          Expanded(
-              child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: StreamBuilder(
-                    stream: roomManager.getRooms(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Container();
-                      }
-                      return Column(
-                          children: snapshot.data!.docs
-                              .mapIndexed(
-                                  (i, doc) => _roomListItem(context, i, doc))
-                              .toList());
-                    },
-                  ))),
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Expanded(
-                  child: ElevatedButton(
-                onPressed: () async {
-                  if (await roomManager.createRoom()) {
-                    Navigator.of(context).pushNamed("/ticTacToe");
-                  }
-                },
-                child: const Text("Create Room"),
-              ))
-            ],
-          ),
-        ]),
-      ),
-    );
+        appBar: AppBar(
+          title: const Text("Select Game"),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Column(
+                  children: games
+                      .map((game) => _gameListItem(context, game))
+                      .toList())),
+        ));
   }
 
-  Widget _roomListItem(
-      BuildContext context, int i, DocumentSnapshot<Map<String, dynamic>> doc) {
-    final gameManager = GameManager.instance;
-    if (doc.data() == null || !gameManager.hasGame()) return Container();
+  Widget _gameListItem(BuildContext context, Game game) {
     return Padding(
       padding: const EdgeInsets.all(4.0),
       child: Row(
@@ -84,12 +48,10 @@ class _HomeState extends State<Home> {
           Expanded(
               child: ElevatedButton(
                   onPressed: () async {
-                    if (await gameManager.joinRoom(doc)) {
-                      Navigator.of(context).pushNamed("/ticTacToe");
-                    }
+                    gameManager.setGame(game);
+                    Navigator.of(context).pushNamed("/rooms");
                   },
-                  child: Text(
-                      "${doc.data()?["host"]["name"]}'s Room (${doc.data()?["playerCount"]}/${gameManager.game!.playerLimit})")))
+                  child: Text(game.name)))
         ],
       ),
     );
