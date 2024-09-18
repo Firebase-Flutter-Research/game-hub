@@ -74,7 +74,6 @@ class TicTacToe extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host}) {
-    if (players.length < 2) gameState["hasRequiredPlayers"] = false;
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
     }
