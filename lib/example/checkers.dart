@@ -12,10 +12,14 @@ class CheckersRoute {
   const CheckersRoute(
       {required this.start, required this.end, required this.intermediates});
 
+  static Map<String, int> positionToMap(Pair<int, int> position) {
+    return {"key": position.key, "value": position.value};
+  }
+
   Map<String, dynamic> toJson() => {
-        "start": start.toMap,
-        "end": end.toMap,
-        "intermediates": intermediates.map((e) => e.toMap),
+        "start": positionToMap(start),
+        "end": positionToMap(end),
+        "intermediates": intermediates.map((e) => positionToMap(e)).toList(),
       };
 
   List<Pair<int, int>> get positions => [start] + intermediates + [end];
@@ -26,9 +30,8 @@ class CheckersRoute {
   bool positionInRoute(Pair<int, int> position) =>
       intermediates.contains(position) || end == position;
 
-  static Pair<int, int> positionFromMap(Map<int, int> map) {
-    final mapEntry = map.entries.first;
-    return Pair(mapEntry.key, mapEntry.value);
+  static Pair<int, int> positionFromMap(Map<String, dynamic> map) {
+    return Pair<int, int>(map["key"]!, map["value"]!);
   }
 
   static CheckersRoute fromJson(Map<String, dynamic> json) => CheckersRoute(
@@ -99,19 +102,19 @@ enum CheckersPiece {
         CheckersRoute? currentRoute,
         List<CheckersRoute> routes) {
       for (var direction in directions) {
-        if (isOutOfBounds(position.key + direction.key,
-                position.value + direction.value, board) ||
-            isOutOfBounds(position.key + 2 * direction.key,
-                position.value + 2 * direction.value, board)) return;
-        final enemy = board[position.key + direction.key]
-            [position.value + direction.value];
-        final target = board[position.key + 2 * direction.key]
-            [position.value + 2 * direction.value];
-        if (enemy == null || !enemies.contains(enemy)) return;
-        if (target != null) return;
-        final targetPosition = Pair(position.key + 2 * direction.key,
-            position.value + 2 * direction.value);
-        if (currentRoute?.positionInRoute(targetPosition) ?? false) return;
+        if (isOutOfBounds(currentPosition.key + direction.key,
+                currentPosition.value + direction.value, board) ||
+            isOutOfBounds(currentPosition.key + 2 * direction.key,
+                currentPosition.value + 2 * direction.value, board)) continue;
+        final enemy = board[currentPosition.key + direction.key]
+            [currentPosition.value + direction.value];
+        final target = board[currentPosition.key + 2 * direction.key]
+            [currentPosition.value + 2 * direction.value];
+        if (enemy == null || !enemies.contains(enemy)) continue;
+        if (target != null) continue;
+        final targetPosition = Pair(currentPosition.key + 2 * direction.key,
+            currentPosition.value + 2 * direction.value);
+        if (currentRoute?.positionInRoute(targetPosition) ?? false) continue;
         final route = CheckersRoute(
             start: currentRoute?.start ?? currentPosition,
             end: targetPosition,
@@ -211,15 +214,6 @@ class Checkers extends Game {
     if (players[gameState["currentPlayer"]] != player) {
       return const NotPlayerTurn();
     }
-    // final board = toBoard(gameState["board"]);
-    // final start = CheckersRoute.positionFromMap(event["start"]);
-    // final piece = board[start.key][start.value];
-    // if (piece == null) return const CheckResultFailure("Piece does not exist");
-    // final end = CheckersRoute.positionFromMap(event["end"]);
-    // final routes = piece.possibleRoutes(start, board);
-    // if (!routes.any((e) => e.positionInRoute(end))) {
-    //   return const CheckResultFailure("Route is impossible");
-    // }
     return const CheckResultSuccess();
   }
 
@@ -242,6 +236,12 @@ class Checkers extends Game {
     board[route.end.key][route.end.value] =
         board[route.start.key][route.start.value];
     board[route.start.key][route.start.value] = null;
+    final kingRow = [0, 7];
+    final kingTransformation = [CheckersPiece.blackKing, CheckersPiece.redKing];
+    if (route.end.key == kingRow[gameState["currentPlayer"]]) {
+      board[route.end.key][route.end.value] =
+          kingTransformation[gameState["currentPlayer"]];
+    }
     gameState["board"] = fromBoard(board);
     gameState["currentPlayer"] += 1;
     gameState["currentPlayer"] %= players.length;
