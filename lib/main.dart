@@ -1,6 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/page/home.dart';
+import 'package:flutter_fire_engine/page/in_game.dart';
+import 'package:flutter_fire_engine/page/rooms.dart';
 import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
 
 void main() async {
@@ -12,7 +15,9 @@ void main() async {
           projectId: "game-hub-2-283bb",
           storageBucket: "game-hub-2-283bb.appspot.com",
           messagingSenderId: "304830683808",
-          appId: "1:304830683808:web:ce7b8061ac46d9034587c5"));
+          appId: kIsWeb
+              ? "1:304830683808:web:ce7b8061ac46d9034587c5"
+              : "1:304830683808:android:d27335da1d4850504587c5"));
   runApp(const MyApp());
 }
 
@@ -31,7 +36,8 @@ class MyApp extends StatelessWidget {
       initialRoute: "/",
       routes: {
         "/": (context) => Home(),
-        "/ticTacToe": (context) => TicTacToePage(),
+        "/rooms": (context) => RoomsPage(),
+        "/inGame": (context) => InGamePage(),
       },
     );
   }
