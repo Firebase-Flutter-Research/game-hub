@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/example/connect_four.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/room.dart';
 import 'package:flutter_fire_engine/page/chat_room.dart';
+import 'package:flutter_fire_engine/page/connect_four.dart';
 import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
 
 class InGamePage extends StatefulWidget {
@@ -20,6 +22,8 @@ class _InGamePageState extends State<InGamePage> {
     switch (roomData.game.runtimeType) {
       case TicTacToe:
         return TicTacToePage(roomData: roomData);
+      case ConnectFour:
+        return ConnectFourPage(roomData: roomData);
       default:
         return Container();
     }

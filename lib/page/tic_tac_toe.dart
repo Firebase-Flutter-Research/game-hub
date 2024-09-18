@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/logic/utils.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/room.dart';
 import 'package:collection/collection.dart';
@@ -61,15 +62,4 @@ Widget _tableWidget(BuildContext context, RoomData roomData) {
           const SizedBox(
               width: (100 + 4 * 2) * 3 + 4 * 2,
               child: Divider(thickness: 2, height: 4))));
-}
-
-List<Widget> joinWidgets(List<Widget> widgets, Widget separator) {
-  List<Widget> result = [];
-  for (Widget widget in widgets) {
-    result.add(widget);
-    if (widgets.last != widget) {
-      result.add(separator);
-    }
-  }
-  return result;
 }
