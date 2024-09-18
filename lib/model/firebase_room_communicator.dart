@@ -26,6 +26,7 @@ class FirebaseRoomCommunicator {
   late Completer<void> _joinRoomResponse;
   late StreamController<RoomData> _roomDataStreamController;
   bool _readingLiveEvents = false;
+  int? _pendingEventId;
 
   void Function(Player)? _onPlayerJoin;
   void Function(Player)? _onPlayerLeave;
@@ -47,12 +48,15 @@ class FirebaseRoomCommunicator {
 
     _eventStreamSubscription = roomReference
         .collection(_eventsCollectionName)
-        .snapshots()
+        .snapshots(
+            includeMetadataChanges: !game.ignoreSimultaneousEventOrdering)
         .listen((eventSnapshots) async {
       _updateConcatenatedEventReference(eventSnapshots.docs);
 
-      final events = _fromConcatenatedEvents(
-          eventSnapshots.docs.map((e) => e.data()).toList());
+      final filteredDocs = eventSnapshots.docs.where((e) =>
+          !e.metadata.hasPendingWrites || game.ignoreSimultaneousEventOrdering);
+      final events =
+          _fromConcatenatedEvents(filteredDocs.map((e) => e.data()).toList());
       final filteredEvents = events
           .toSet()
           .difference(room.events.toSet())
@@ -225,11 +229,13 @@ class FirebaseRoomCommunicator {
 
   Future<void> _sendEvent(EventType type,
       [Map<String, dynamic>? payload]) async {
+    if (_pendingEventId != null) return;
+    _pendingEventId = Random().nextInt(0xFFFFFFFF);
     _concatenatedEventReference ??= await _createConcatenatedEvent();
-    _concatenatedEventReference!.update({
+    await _concatenatedEventReference!.update({
       "events": FieldValue.arrayUnion([
         Event(
-                id: Random().nextInt(0xFFFFFFFF),
+                id: _pendingEventId!,
                 type: type,
                 timestamp: Timestamp.now(),
                 author: player,
@@ -240,6 +246,9 @@ class FirebaseRoomCommunicator {
   }
 
   void _processEvent(Event event) {
+    if (_pendingEventId == event.id) {
+      _pendingEventId = null;
+    }
     switch (event.type) {
       case EventType.gameEvent:
         return _processGameEvent(GameEvent(
