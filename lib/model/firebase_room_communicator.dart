@@ -26,6 +26,7 @@ class FirebaseRoomCommunicator {
   late Completer<void> _joinRoomResponse;
   late StreamController<RoomData> _roomDataStreamController;
   bool _readingLiveEvents = false;
+  int? _pendingEventId;
 
   void Function(Player)? _onPlayerJoin;
   void Function(Player)? _onPlayerLeave;
@@ -228,11 +229,13 @@ class FirebaseRoomCommunicator {
 
   Future<void> _sendEvent(EventType type,
       [Map<String, dynamic>? payload]) async {
+    if (_pendingEventId != null) return;
+    _pendingEventId = Random().nextInt(0xFFFFFFFF);
     _concatenatedEventReference ??= await _createConcatenatedEvent();
     await _concatenatedEventReference!.update({
       "events": FieldValue.arrayUnion([
         Event(
-                id: Random().nextInt(0xFFFFFFFF),
+                id: _pendingEventId!,
                 type: type,
                 timestamp: Timestamp.now(),
                 author: player,
@@ -243,6 +246,9 @@ class FirebaseRoomCommunicator {
   }
 
   void _processEvent(Event event) {
+    if (_pendingEventId == event.id) {
+      _pendingEventId = null;
+    }
     switch (event.type) {
       case EventType.gameEvent:
         return _processGameEvent(GameEvent(
