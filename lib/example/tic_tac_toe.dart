@@ -29,7 +29,7 @@ class TicTacToe extends Game {
   int get playerLimit => 2;
 
   @override
-  bool get ignoreSimultaneousEventOrdering => true;
+  bool get ignoreSimultaneousEventOrdering => false;
 
   // Return game state before moves are performed.
   @override

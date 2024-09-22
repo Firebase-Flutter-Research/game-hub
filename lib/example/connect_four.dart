@@ -13,6 +13,9 @@ class ConnectFour extends Game {
   @override
   int get playerLimit => 2;
 
+  @override
+  bool get ignoreSimultaneousEventOrdering => true;
+
   static const int width = 7;
   static const int height = 6;
 

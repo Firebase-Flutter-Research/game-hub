@@ -191,6 +191,9 @@ class Checkers extends Game {
   int get playerLimit => 2;
 
   @override
+  bool get ignoreSimultaneousEventOrdering => true;
+
+  @override
   Map<String, dynamic> getInitialGameState(
       {required List<Player> players, required Player host}) {
     final board = List.generate(

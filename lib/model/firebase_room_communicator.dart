@@ -6,15 +6,20 @@ import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/player.dart';
 import 'package:flutter_fire_engine/model/room.dart';
+import 'package:pair/pair.dart';
 
 class NotRoomHost extends CheckResultFailure {
   const NotRoomHost() : super("Player is not the room's host");
 }
 
+class AnotherEventProcessing extends CheckResultFailure {
+  const AnotherEventProcessing() : super("Another event is being processed");
+}
+
 class FirebaseRoomCommunicator {
   static const _collectionPrefix = "Rooms";
   static const _eventsCollectionName = "Events";
-  static const _eventLimit = 100;
+  static const _eventLimit = 5;
 
   late Game game;
   late Player player;
@@ -25,8 +30,10 @@ class FirebaseRoomCommunicator {
       _eventStreamSubscription;
   late Completer<void> _joinRoomResponse;
   late StreamController<RoomData> _roomDataStreamController;
+  late DocumentReference<Map<String, dynamic>> _concatenatedEventReference;
   bool _readingLiveEvents = false;
-  int? _pendingEventId;
+  bool _processingGameEvent = false;
+  bool _creatingConcatentatedEvent = false;
 
   void Function(Player)? _onPlayerJoin;
   void Function(Player)? _onPlayerLeave;
@@ -39,8 +46,6 @@ class FirebaseRoomCommunicator {
   void Function(Player, Player)? _onHostReassigned;
   void Function(Event)? _onOtherEvent;
 
-  DocumentReference<Map<String, dynamic>>? _concatenatedEventReference;
-
   FirebaseRoomCommunicator(
       this.game, this.player, this.roomReference, this.room) {
     _joinRoomResponse = Completer();
@@ -51,17 +56,16 @@ class FirebaseRoomCommunicator {
         .snapshots(
             includeMetadataChanges: !game.ignoreSimultaneousEventOrdering)
         .listen((eventSnapshots) async {
-      _updateConcatenatedEventReference(eventSnapshots.docs);
-
-      final filteredDocs = eventSnapshots.docs.where((e) =>
-          !e.metadata.hasPendingWrites || game.ignoreSimultaneousEventOrdering);
-      final events =
-          _fromConcatenatedEvents(filteredDocs.map((e) => e.data()).toList());
-      final filteredEvents = events
-          .toSet()
-          .difference(room.events.toSet())
-          .toList()
-        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      final filteredDocs = eventSnapshots.docs
+          .where((e) =>
+              !e.metadata.hasPendingWrites ||
+              game.ignoreSimultaneousEventOrdering)
+          .toList();
+      _updateConcatenatedEventReference(filteredDocs);
+      final events = _fromConcatenatedEvents(
+          filteredDocs.map((e) => e.data()).toList()
+            ..sort((a, b) => a["timestamp"].compareTo(b["timestamp"])));
+      final filteredEvents = events.where((e) => !room.events.contains(e));
 
       for (final event in filteredEvents) {
         _processEvent(event);
@@ -95,8 +99,9 @@ class FirebaseRoomCommunicator {
           "gameStarted": false
         }),
         Room.createRoom(game: game, host: player));
-    await firebaseRoomCommunicator
-        ._sendEvent(EventType.playerJoin, {"player": player.toJson()});
+    firebaseRoomCommunicator._concatenatedEventReference =
+        await firebaseRoomCommunicator._createConcatenatedEvent();
+    await firebaseRoomCommunicator._sendEvent(EventType.playerJoin);
     await firebaseRoomCommunicator.roomReference
         .update({"playerCount": FieldValue.increment(1)});
     await firebaseRoomCommunicator._joinRoomResponse.future;
@@ -120,8 +125,7 @@ class FirebaseRoomCommunicator {
         (await roomSnapshot.reference.collection(_eventsCollectionName).get())
             .docs;
     firebaseRoomCommunicator._updateConcatenatedEventReference(docs);
-    await firebaseRoomCommunicator
-        ._sendEvent(EventType.playerJoin, {"player": player.toJson()});
+    await firebaseRoomCommunicator._sendEvent(EventType.playerJoin);
     await firebaseRoomCommunicator.roomReference
         .update({"playerCount": FieldValue.increment(1)});
     await firebaseRoomCommunicator._joinRoomResponse.future;
@@ -144,7 +148,7 @@ class FirebaseRoomCommunicator {
           await roomReference.update({"host": room.players.first.toJson()});
         }
       } else {
-        await _deleteRoom(roomReference);
+        _deleteRoom(roomReference);
       }
     }
 
@@ -155,14 +159,15 @@ class FirebaseRoomCommunicator {
 
   Future<void> _deleteRoom(
       DocumentReference<Map<String, dynamic>> reference) async {
+    await reference.delete();
     final events = await reference.collection(_eventsCollectionName).get();
     for (var event in events.docs) {
       await event.reference.delete();
     }
-    await reference.delete();
   }
 
   Future<CheckResult> sendGameEvent(Map<String, dynamic> event) async {
+    if (_processingGameEvent) return const AnotherEventProcessing();
     final checkResult = room.checkPerformEvent(event: event, player: player);
     if (checkResult is CheckResultFailure) {
       if (_onGameEventFailure != null && _readingLiveEvents) {
@@ -170,6 +175,7 @@ class FirebaseRoomCommunicator {
       }
       return checkResult;
     }
+    _processingGameEvent = true;
     await _sendEvent(EventType.gameEvent, event);
     return checkResult;
   }
@@ -185,6 +191,7 @@ class FirebaseRoomCommunicator {
     }
     await _sendEvent(EventType.gameStart,
         {"players": room.players.map((p) => p.toJson()).toList()});
+    await roomReference.update({"gameStarted": true});
     return checkResult;
   }
 
@@ -192,6 +199,7 @@ class FirebaseRoomCommunicator {
     if (player != room.host) return;
     if (!room.gameStarted) return;
     await _sendEvent(EventType.gameStop, log);
+    await roomReference.update({"gameStarted": false});
   }
 
   Future<void> sendOtherEvent(Map<String, dynamic> payload) async {
@@ -200,7 +208,12 @@ class FirebaseRoomCommunicator {
 
   Future<DocumentReference<Map<String, dynamic>>>
       _createConcatenatedEvent() async {
-    return roomReference.collection(_eventsCollectionName).add({"events": []});
+    return roomReference.collection(_eventsCollectionName).add({
+      "events": [],
+      "timestamp": game.ignoreSimultaneousEventOrdering
+          ? Timestamp.now()
+          : FieldValue.serverTimestamp(),
+    });
   }
 
   List<Event> _fromConcatenatedEvents(
@@ -212,49 +225,48 @@ class FirebaseRoomCommunicator {
         .toList();
   }
 
-  DocumentReference<Map<String, dynamic>>? _findCurrentConcatenation(
+  Pair<DocumentReference<Map<String, dynamic>>, bool> _findCurrentConcatenation(
       List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
-    for (var doc in docs) {
-      if (doc.data()["events"].length < _eventLimit) {
-        return doc.reference;
-      }
-    }
-    return null;
+    final sortedDocs = docs.toList()
+      ..sort((a, b) => b.data()["timestamp"].compareTo(a.data()["timestamp"]));
+    return Pair(sortedDocs.first.reference,
+        sortedDocs.first.data()["events"].length < _eventLimit);
   }
 
   void _updateConcatenatedEventReference(
       List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
-    _concatenatedEventReference = _findCurrentConcatenation(docs);
+    if (docs.isEmpty) return;
+    final result = _findCurrentConcatenation(docs);
+    _concatenatedEventReference = result.key;
+    if (!_creatingConcatentatedEvent && player == room.host && !result.value) {
+      _creatingConcatentatedEvent = true;
+      _createConcatenatedEvent()
+          .then((_) => _creatingConcatentatedEvent = false);
+    }
   }
 
   Future<void> _sendEvent(EventType type,
       [Map<String, dynamic>? payload]) async {
-    if (_pendingEventId != null) return;
-    _pendingEventId = Random().nextInt(0xFFFFFFFF);
-    _concatenatedEventReference ??= await _createConcatenatedEvent();
-    await _concatenatedEventReference!.update({
+    await _concatenatedEventReference.update({
       "events": FieldValue.arrayUnion([
         Event(
-                id: _pendingEventId!,
+                id: Random().nextInt(0xFFFFFFFF),
                 type: type,
-                timestamp: Timestamp.now(),
                 author: player,
                 payload: payload)
             .toJson()
-      ])
+      ]),
+      "timestamp": game.ignoreSimultaneousEventOrdering
+          ? Timestamp.now()
+          : FieldValue.serverTimestamp(),
     });
   }
 
   void _processEvent(Event event) {
-    if (_pendingEventId == event.id) {
-      _pendingEventId = null;
-    }
     switch (event.type) {
       case EventType.gameEvent:
-        return _processGameEvent(GameEvent(
-            timestamp: event.timestamp,
-            author: event.author,
-            payload: event.payload!));
+        return _processGameEvent(
+            GameEvent(author: event.author, payload: event.payload!));
       case EventType.playerJoin:
         return _processPlayerJoinEvent(event.author);
       case EventType.playerLeave:
@@ -274,18 +286,19 @@ class FirebaseRoomCommunicator {
     }
   }
 
-  void _processGameEvent(GameEvent event) async {
+  void _processGameEvent(GameEvent event) {
     room.processEvent(event);
     if (_onGameEvent != null && _readingLiveEvents) {
       _onGameEvent!(event);
     }
     final log = room.checkGameEnd();
-    if (log != null) {
-      await stopGame(log);
+    if (_readingLiveEvents && log != null) {
+      stopGame(log);
     }
+    _processingGameEvent = false;
   }
 
-  void _processPlayerJoinEvent(Player player) async {
+  void _processPlayerJoinEvent(Player player) {
     room.joinRoom(player);
     if (_onPlayerJoin != null && this.player != player && _readingLiveEvents) {
       _onPlayerJoin!(player);
@@ -295,36 +308,38 @@ class FirebaseRoomCommunicator {
     }
   }
 
-  void _processPlayerLeaveEvent(Player player) async {
+  void _processPlayerLeaveEvent(Player player) {
     room.leaveRoom(player);
     if (_readingLiveEvents && this.player != player) {
       if (_onPlayerLeave != null) _onPlayerLeave!(player);
     }
-    if (room.gameStarted && (!room.hasRequiredPlayers || room.isOvercapacity)) {
-      await stopGame();
+    if (_readingLiveEvents &&
+        room.gameStarted &&
+        (!room.hasRequiredPlayers || room.isOvercapacity)) {
+      stopGame();
     }
   }
 
-  void _processGameStartEvent(List<Player> players) async {
+  void _processGameStartEvent(List<Player> players) {
     if (room.startGame(players) is CheckResultSuccess) {
       if (_onGameStart != null && _readingLiveEvents) _onGameStart!();
     }
   }
 
-  void _processGameStopEvent(Map<String, dynamic>? log) async {
+  void _processGameStopEvent(Map<String, dynamic>? log) {
     if (room.stopGame()) {
       if (_onGameStop != null && _readingLiveEvents) _onGameStop!(log);
     }
   }
 
-  void _processHostReassignedEvent(Player newHost, Player oldHost) async {
+  void _processHostReassignedEvent(Player newHost, Player oldHost) {
     room.host = newHost;
     if (player != oldHost && _onHostReassigned != null && _readingLiveEvents) {
       _onHostReassigned!(newHost, oldHost);
     }
   }
 
-  void _processOtherEvent(Event event) async {
+  void _processOtherEvent(Event event) {
     if (_readingLiveEvents && _onOtherEvent != null) _onOtherEvent!(event);
   }
 

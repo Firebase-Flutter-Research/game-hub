@@ -35,6 +35,9 @@ class RockPaperScissors extends Game {
   int get playerLimit => 2;
 
   @override
+  bool get ignoreSimultaneousEventOrdering => true;
+
+  @override
   Map<String, dynamic> getInitialGameState(
       {required List<Player> players, required Player host}) {
     return {"choices": List<RockPaperScissorsChoice?>.filled(2, null)};
