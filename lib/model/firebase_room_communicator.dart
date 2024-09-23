@@ -35,9 +35,9 @@ class FirebaseRoomCommunicator {
   void Function(Player)? _onPlayerJoin;
   void Function(Player)? _onPlayerLeave;
   void Function()? _onLeave;
-  void Function(GameEvent)? _onGameEvent;
+  void Function(GameEvent, Map<String, dynamic>)? _onGameEvent;
   void Function(CheckResultFailure)? _onGameEventFailure;
-  void Function()? _onGameStart;
+  void Function(Map<String, dynamic>)? _onGameStart;
   void Function(CheckResultFailure)? _onGameStartFailure;
   void Function(Map<String, dynamic>?)? _onGameStop;
   void Function(Player, Player)? _onHostReassigned;
@@ -76,6 +76,8 @@ class FirebaseRoomCommunicator {
       _readingLiveEvents = true;
     });
   }
+
+  static int get _randomInt => Random().nextInt(0xFFFFFFFF);
 
   static String getRoomCollectionName(Game game) =>
       "$_collectionPrefix:${game.name}";
@@ -180,15 +182,18 @@ class FirebaseRoomCommunicator {
 
   Future<CheckResult> startGame() async {
     if (player != room.host) return const NotRoomHost();
-    final checkResult = room.startGame(room.players);
+    final seed = _randomInt;
+    final checkResult = room.checkStartGame();
     if (checkResult is CheckResultFailure) {
       if (_onGameStartFailure != null && _readingLiveEvents) {
         _onGameStartFailure!(checkResult);
       }
       return checkResult;
     }
-    await _sendEvent(EventType.gameStart,
-        {"players": room.players.map((p) => p.toJson()).toList()});
+    await _sendEvent(EventType.gameStart, {
+      "players": room.players.map((p) => p.toJson()).toList(),
+      "seed": seed
+    });
     await roomReference.update({"gameStarted": true});
     return checkResult;
   }
@@ -241,7 +246,7 @@ class FirebaseRoomCommunicator {
     await _concatenatedEventReference!.update({
       "events": FieldValue.arrayUnion([
         Event(
-                id: Random().nextInt(0xFFFFFFFF),
+                id: _randomInt,
                 type: type,
                 timestamp: Timestamp.now(),
                 author: player,
@@ -263,10 +268,12 @@ class FirebaseRoomCommunicator {
       case EventType.playerLeave:
         return _processPlayerLeaveEvent(event.author);
       case EventType.gameStart:
-        return _processGameStartEvent(event.payload!["players"]
-            .map((p) => Player.fromJson(p))
-            .toList()
-            .cast<Player>());
+        return _processGameStartEvent(
+            event.payload!["players"]
+                .map((p) => Player.fromJson(p))
+                .toList()
+                .cast<Player>(),
+            event.payload!["seed"]);
       case EventType.gameStop:
         return _processGameStopEvent(event.payload);
       case EventType.hostReassigned:
@@ -280,7 +287,7 @@ class FirebaseRoomCommunicator {
   void _processGameEvent(GameEvent event) async {
     room.processEvent(event);
     if (_onGameEvent != null && _readingLiveEvents) {
-      _onGameEvent!(event);
+      _onGameEvent!(event, room.gameState!);
     }
     final log = room.checkGameEnd();
     if (_readingLiveEvents && log != null) {
@@ -313,9 +320,10 @@ class FirebaseRoomCommunicator {
     }
   }
 
-  void _processGameStartEvent(List<Player> players) {
-    if (room.startGame(players) is CheckResultSuccess) {
-      if (_onGameStart != null && _readingLiveEvents) _onGameStart!();
+  void _processGameStartEvent(List<Player> players, int seed) {
+    if (room.startGame(players, seed) is CheckResultSuccess) {
+      if (_onGameStart != null && _readingLiveEvents)
+        _onGameStart!(room.gameState!);
     }
   }
 
@@ -348,7 +356,7 @@ class FirebaseRoomCommunicator {
     _onLeave = callback;
   }
 
-  void setOnGameEvent(void Function(GameEvent) callback) {
+  void setOnGameEvent(void Function(GameEvent, Map<String, dynamic>) callback) {
     _onGameEvent = callback;
   }
 
@@ -356,7 +364,7 @@ class FirebaseRoomCommunicator {
     _onGameEventFailure = callback;
   }
 
-  void setOnGameStart(void Function() callback) {
+  void setOnGameStart(void Function(Map<String, dynamic>) callback) {
     _onGameStart = callback;
   }
 

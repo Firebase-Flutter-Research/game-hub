@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/game.dart';
@@ -192,7 +194,9 @@ class Checkers extends Game {
 
   @override
   Map<String, dynamic> getInitialGameState(
-      {required List<Player> players, required Player host}) {
+      {required List<Player> players,
+      required Player host,
+      required Random random}) {
     final board = List.generate(
         8,
         (i) => List.generate(8, (j) {
@@ -222,7 +226,8 @@ class Checkers extends Game {
       {required GameEvent event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     final board = toBoard(gameState["board"]);
     final route = CheckersRoute.fromJson(event.payload["route"]);
     if (!route.isPassive) {
@@ -252,7 +257,8 @@ class Checkers extends Game {
       {required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
     }
@@ -262,7 +268,8 @@ class Checkers extends Game {
   Map<String, dynamic>? checkGameEnd(
       {required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     final board = toBoard(gameState["board"]);
     final counts = {0: 0, 1: 0};
     for (var i = 0; i < board.length; i++) {

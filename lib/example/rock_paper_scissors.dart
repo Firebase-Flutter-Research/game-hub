@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/game.dart';
@@ -36,7 +38,9 @@ class RockPaperScissors extends Game {
 
   @override
   Map<String, dynamic> getInitialGameState(
-      {required List<Player> players, required Player host}) {
+      {required List<Player> players,
+      required Player host,
+      required Random random}) {
     return {"choices": List<RockPaperScissorsChoice?>.filled(2, null)};
   }
 
@@ -61,7 +65,8 @@ class RockPaperScissors extends Game {
       {required GameEvent event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     var index = players.indexOf(event.author);
     final List<RockPaperScissorsChoice?> choices = gameState["choices"];
     choices[index] = RockPaperScissorsChoice.fromKey(event.payload["choice"]);
@@ -72,13 +77,15 @@ class RockPaperScissors extends Game {
       {required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {}
+      required Player host,
+      required Random random}) {}
 
   @override
   Map<String, dynamic>? checkGameEnd(
       {required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     final List<RockPaperScissorsChoice?> choices = gameState["choices"];
     if (choices.any((e) => e == null)) return null;
     if (choices[0] == choices[1]) return {"draw": true};
