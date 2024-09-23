@@ -28,9 +28,6 @@ class TicTacToe extends Game {
   @override
   int get playerLimit => 2;
 
-  @override
-  bool get ignoreSimultaneousEventOrdering => true;
-
   // Return game state before moves are performed.
   @override
   Map<String, dynamic> getInitialGameState(
