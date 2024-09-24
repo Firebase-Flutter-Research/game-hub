@@ -67,7 +67,7 @@ enum LastCardValue {
 enum LastCardColor {
   red(key: "red", color: Color.fromRGBO(252, 29, 100, 1.0)),
   green(key: "green", color: Color.fromRGBO(122, 150, 66, 1.0)),
-  blue(key: "blue", color: Color.fromRGBO(30, 9, 255, 1.0)),
+  blue(key: "blue", color: Color.fromRGBO(30, 144, 255, 1.0)),
   yellow(key: "yellow", color: Color.fromRGBO(255, 194, 0, 1.0));
 
   final String key;

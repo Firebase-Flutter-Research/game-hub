@@ -30,7 +30,7 @@ class LastCardPage extends StatelessWidget {
                                   fontWeight: p == currentPlayer
                                       ? FontWeight.bold
                                       : FontWeight.normal,
-                                  fontSize: 16)),
+                                  fontSize: p == currentPlayer ? 18 : 16)),
                           Text(
                               "x${roomData.gameState!["playerCards"][p].length}"),
                         ],
@@ -60,7 +60,7 @@ class LastCardPage extends StatelessWidget {
                 fontWeight: gameManager.player == currentPlayer
                     ? FontWeight.bold
                     : FontWeight.normal,
-                fontSize: 16)),
+                fontSize: gameManager.player == currentPlayer ? 18 : 16)),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: SingleChildScrollView(
@@ -115,16 +115,21 @@ Widget _cardWidgetBase(Color color, [Widget? child]) {
         child: Container(
           width: 100,
           height: 150,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
-            boxShadow: [
-              BoxShadow(blurRadius: 5.0, spreadRadius: 1.0, color: Colors.black)
+            boxShadow: const [
+              BoxShadow(
+                  blurRadius: 5.0, spreadRadius: 1.0, color: Colors.black87)
             ],
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Padding(
             padding: const EdgeInsets.all(8),
             child: Container(
-              color: color,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(5),
+              ),
               child: Align(
                 alignment: Alignment.center,
                 child: Container(color: Colors.white, height: 50, child: child),
