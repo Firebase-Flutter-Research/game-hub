@@ -5,61 +5,50 @@ import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/player.dart';
 import 'package:pair/pair.dart';
 
-class NotPlayerTurn extends CheckResultFailure {
-  const NotPlayerTurn() : super("Not your turn");
-}
-
-class OutOfBounds extends CheckResultFailure {
-  const OutOfBounds() : super("Position out of bounds");
-}
-
-class PositionAlreadyTaken extends CheckResultFailure {
-  const PositionAlreadyTaken() : super("Position already taken");
-}
-
-class TicTacToe extends Game {
-  // Game ID name
+class ConnectFour extends Game {
   @override
-  String get name => "Tic Tac Toe";
+  String get name => "Four in a Row";
 
-  // Count of required players to play
   @override
   int get requiredPlayers => 2;
 
-  // Number of max allowed players
   @override
   int get playerLimit => 2;
 
-  // Return game state before moves are performed.
+  static const int width = 7;
+  static const int height = 6;
+
   @override
   Map<String, dynamic> getInitialGameState(
       {required List<Player> players,
       required Player host,
       required Random random}) {
-    return {"currentPlayer": 0, "board": List.filled(9, -1)};
+    return {"currentPlayer": 0, "board": List.filled(width * height, -1)};
   }
 
-  // Check if player can perform an event and return data.
   @override
   CheckResult checkPerformEvent(
       {required Map<String, dynamic> event,
       required Player player,
-      required Player host,
       required Map<String, dynamic> gameState,
-      required List<Player> players}) {
+      required List<Player> players,
+      required Player host}) {
     if (players[gameState["currentPlayer"]] != player) {
-      return const NotPlayerTurn();
+      return const CheckResultFailure("Not your turn");
     }
-    if (event["position"] < 0 || event["position"] >= 9) {
-      return const OutOfBounds();
+    int position = event["position"];
+    if (position < 0 || position >= width) {
+      return const CheckResultFailure("Position out of bounds");
     }
-    if (gameState["board"][event["position"]] != -1) {
-      return const PositionAlreadyTaken();
+    for (int newPosition = position + width * (height - 1);
+        newPosition >= 0;
+        newPosition -= width) {
+      if (gameState["board"][newPosition] != -1) continue;
+      return const CheckResultSuccess();
     }
-    return const CheckResultSuccess();
+    return const CheckResultFailure("Column overflows");
   }
 
-  // Process new event and return if it was successful.
   @override
   void processEvent(
       {required GameEvent event,
@@ -67,12 +56,19 @@ class TicTacToe extends Game {
       required List<Player> players,
       required Player host,
       required Random random}) {
-    gameState["board"][event.payload["position"]] = gameState["currentPlayer"];
-    gameState["currentPlayer"] += 1;
-    gameState["currentPlayer"] %= players.length;
+    int position = event.payload["position"];
+    for (int newPosition = position + width * (height - 1);
+        newPosition >= 0;
+        newPosition -= width) {
+      if (gameState["board"][newPosition] != -1) continue;
+      gameState["board"][newPosition] = gameState["currentPlayer"];
+      gameState["lastPosition"] = newPosition;
+      gameState["currentPlayer"] += 1;
+      gameState["currentPlayer"] %= players.length;
+      return;
+    }
   }
 
-  // Handle when player leaves room.
   @override
   void onPlayerLeave(
       {required Player player,
@@ -80,7 +76,6 @@ class TicTacToe extends Game {
       required List<Player> players,
       required Player host,
       required Random random}) {
-    if (players.length < 2) gameState["hasRequiredPlayers"] = false;
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
     }
@@ -88,17 +83,17 @@ class TicTacToe extends Game {
 
   Pair<int, int> getMatrixPosition(int position) {
     if (position < 0) return const Pair(-1, -1);
-    return Pair(position ~/ 3, position % 3);
+    return Pair(position ~/ width, position % width);
   }
 
   bool positionOutOfBounds(int posRow, int posCol) {
-    return posRow < 0 || posRow >= 3 || posCol < 0 || posCol >= 3;
+    return posRow < 0 || posRow >= height || posCol < 0 || posCol >= width;
   }
 
   int countDirection(int posRow, int posCol, int dirRow, int dirCol,
       List<int> board, int icon) {
     if (positionOutOfBounds(posRow, posCol)) return 0;
-    if (icon != board[posRow * 3 + posCol]) return 0;
+    if (icon != board[posRow * width + posCol]) return 0;
     return 1 +
         countDirection(
             posRow + dirRow, posCol + dirCol, dirRow, dirCol, board, icon);
@@ -106,24 +101,24 @@ class TicTacToe extends Game {
 
   int getWinner(Map<String, dynamic> gameState) {
     final board = List<int>.from(gameState["board"]);
-    for (var position = 0; position < 9; position++) {
-      final matrixPosition = getMatrixPosition(position);
-      final directions = [
-        const Pair(1, 0),
-        const Pair(1, 1),
-        const Pair(0, 1),
-        const Pair(-1, 1)
-      ];
-      final icon = board[position];
-      if (icon == -1) continue;
-      for (var direction in directions) {
-        var count = countDirection(matrixPosition.key, matrixPosition.value,
-                direction.key, direction.value, board, icon) +
-            countDirection(matrixPosition.key, matrixPosition.value,
-                -direction.key, -direction.value, board, icon) -
-            1;
-        if (count >= 3) return board[position];
-      }
+    int? position = gameState["lastPosition"];
+    if (position == null) return -1;
+    final matrixPosition = getMatrixPosition(position);
+    final directions = [
+      const Pair(1, 0),
+      const Pair(1, 1),
+      const Pair(0, 1),
+      const Pair(-1, 1)
+    ];
+    final icon = board[position];
+    if (icon == -1) return -1;
+    for (var direction in directions) {
+      var count = countDirection(matrixPosition.key, matrixPosition.value,
+              direction.key, direction.value, board, icon) +
+          countDirection(matrixPosition.key, matrixPosition.value,
+              -direction.key, -direction.value, board, icon) -
+          1;
+      if (count >= 4) return board[position];
     }
     return -1;
   }
@@ -132,7 +127,6 @@ class TicTacToe extends Game {
     return !gameState["board"].any((e) => e == -1);
   }
 
-  // Determine when the game has ended and return game end data.
   @override
   Map<String, dynamic>? checkGameEnd(
       {required Map<String, dynamic> gameState,

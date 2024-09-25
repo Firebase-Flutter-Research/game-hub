@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/example/connect_four.dart';
+import 'package:flutter_fire_engine/example/checkers.dart';
+import 'package:flutter_fire_engine/example/last_card.dart';
+import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
@@ -12,7 +16,13 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   // Add more games to game hub via this list.
-  List<Game> games = [TicTacToe()];
+  List<Game> games = [
+    TicTacToe(),
+    ConnectFour(),
+    Checkers(),
+    RockPaperScissors(),
+    LastCard(),
+  ];
 
   late GameManager gameManager;
 
