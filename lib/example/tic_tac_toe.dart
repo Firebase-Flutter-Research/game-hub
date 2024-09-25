@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/player.dart';
@@ -31,7 +33,9 @@ class TicTacToe extends Game {
   // Return game state before moves are performed.
   @override
   Map<String, dynamic> getInitialGameState(
-      {required List<Player> players, required Player host}) {
+      {required List<Player> players,
+      required Player host,
+      required Random random}) {
     return {"currentPlayer": 0, "board": List.filled(9, -1)};
   }
 
@@ -61,7 +65,8 @@ class TicTacToe extends Game {
       {required GameEvent event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     gameState["board"][event.payload["position"]] = gameState["currentPlayer"];
     gameState["currentPlayer"] += 1;
     gameState["currentPlayer"] %= players.length;
@@ -73,7 +78,8 @@ class TicTacToe extends Game {
       {required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     if (players.length < 2) gameState["hasRequiredPlayers"] = false;
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
@@ -131,7 +137,8 @@ class TicTacToe extends Game {
   Map<String, dynamic>? checkGameEnd(
       {required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     final winner = getWinner(gameState);
     if (winner != -1) {
       return {"winnerName": players[winner].name, "draw": false};

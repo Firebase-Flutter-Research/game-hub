@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/player.dart';
@@ -18,7 +20,9 @@ class ConnectFour extends Game {
 
   @override
   Map<String, dynamic> getInitialGameState(
-      {required List<Player> players, required Player host}) {
+      {required List<Player> players,
+      required Player host,
+      required Random random}) {
     return {"currentPlayer": 0, "board": List.filled(width * height, -1)};
   }
 
@@ -50,7 +54,8 @@ class ConnectFour extends Game {
       {required GameEvent event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     int position = event.payload["position"];
     for (int newPosition = position + width * (height - 1);
         newPosition >= 0;
@@ -69,7 +74,8 @@ class ConnectFour extends Game {
       {required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
     }
@@ -125,7 +131,8 @@ class ConnectFour extends Game {
   Map<String, dynamic>? checkGameEnd(
       {required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     final winner = getWinner(gameState);
     if (winner != -1) {
       return {"winnerName": players[winner].name, "draw": false};
