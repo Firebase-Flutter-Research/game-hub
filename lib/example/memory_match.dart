@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/game.dart';
@@ -31,17 +32,19 @@ class MemoryMatch extends Game {
 
   @override
   Map<String, dynamic> getInitialGameState(
-      {required List<Player> players, required Player host}) {
+      {required List<Player> players,
+      required Player host,
+      required Random random}) {
     // TODO: implement getInitialGameState
     List<MemoryCard> cards = [];
     int initialAscii = ascii.encode("A")[0];
-    for (var i = 0; i <= 25; i++) {
+    for (var i = 0; i < 15; i++) {
       cards.addAll([
         MemoryCard(symbol: String.fromCharCode(initialAscii + i)),
         MemoryCard(symbol: String.fromCharCode(initialAscii + i))
       ]);
     }
-    cards.shuffle();
+    cards.shuffle(random);
     return {"currentPlayer": 0, "layout": cards, "currentlyFlipped": []};
   }
   // gameState = {
@@ -65,7 +68,7 @@ class MemoryMatch extends Game {
     if (players[gameState["currentPlayer"]] != player) {
       return const NotPlayerTurn();
     }
-    if (event["position"] < 0 || event["position"] >= 20) {
+    if (event["position"] < 0 || event["position"] >= 30) {
       return const NotSelectable();
     }
     if (gameState["layout"][event["position"]].isFlipped()) {
@@ -79,11 +82,12 @@ class MemoryMatch extends Game {
       {required GameEvent event,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     // TODO: implement
     int position = event.payload["position"];
 
-    gameState["currentlyFLipped"].add(position);
+    gameState["currentlyFlipped"].add(position);
     gameState["layout"][position].flipCard();
     if (gameState["currentlyFlipped"].length >= 2) {
       MemoryCard card1 = gameState["layout"][gameState["currentlyFlipped"][0]];
@@ -109,7 +113,8 @@ class MemoryMatch extends Game {
       {required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     // TODO: implement onPlayerLeave
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
@@ -120,7 +125,8 @@ class MemoryMatch extends Game {
   Map<String, dynamic>? checkGameEnd(
       {required Map<String, dynamic> gameState,
       required List<Player> players,
-      required Player host}) {
+      required Player host,
+      required Random random}) {
     // TODO: implement checkGameEnd
     Map<Player, int> scores = {};
     for (MemoryCard card in gameState["layout"]) {
