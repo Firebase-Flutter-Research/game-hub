@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/connect_four.dart';
 import 'package:flutter_fire_engine/example/checkers.dart';
-import 'package:flutter_fire_engine/example/dice_roller.dart';
 import 'package:flutter_fire_engine/example/last_card.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
@@ -22,7 +21,6 @@ class _HomeState extends State<Home> {
     ConnectFour(),
     Checkers(),
     RockPaperScissors(),
-    DiceRoller(),
     LastCard(),
   ];
 

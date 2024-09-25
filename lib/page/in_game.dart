@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/connect_four.dart';
 import 'package:flutter_fire_engine/example/checkers.dart';
-import 'package:flutter_fire_engine/example/dice_roller.dart';
 import 'package:flutter_fire_engine/example/last_card.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
@@ -10,7 +9,6 @@ import 'package:flutter_fire_engine/model/room.dart';
 import 'package:flutter_fire_engine/page/chat_room.dart';
 import 'package:flutter_fire_engine/page/connect_four.dart';
 import 'package:flutter_fire_engine/page/checkers.dart';
-import 'package:flutter_fire_engine/page/dice_roller.dart';
 import 'package:flutter_fire_engine/page/last_card.dart';
 import 'package:flutter_fire_engine/page/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
@@ -36,8 +34,6 @@ class _InGamePageState extends State<InGamePage> {
         return CheckersPage(roomData: roomData);
       case RockPaperScissors:
         return RockPaperScissorsPage(roomData: roomData);
-      case DiceRoller:
-        return DiceRollerPage(roomData: roomData);
       case LastCard:
         return LastCardPage(roomData: roomData);
       default:
