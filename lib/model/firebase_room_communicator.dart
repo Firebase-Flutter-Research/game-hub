@@ -179,7 +179,6 @@ class FirebaseRoomCommunicator {
 
   Future<CheckResult> startGame() async {
     if (player != room.host) return const NotRoomHost();
-    final seed = _randomInt;
     final checkResult = room.checkStartGame();
     if (checkResult is CheckResultFailure) {
       if (_onGameStartFailure != null && _readingLiveEvents) {
@@ -189,7 +188,7 @@ class FirebaseRoomCommunicator {
     }
     await _sendEvent(EventType.gameStart, {
       "players": room.players.map((p) => p.toJson()).toList(),
-      "seed": seed
+      "seed": _randomInt
     });
     await roomReference.update({"gameStarted": true});
     return checkResult;
@@ -319,8 +318,9 @@ class FirebaseRoomCommunicator {
 
   void _processGameStartEvent(List<Player> players, int seed) {
     if (room.startGame(players, seed) is CheckResultSuccess) {
-      if (_onGameStart != null && _readingLiveEvents)
+      if (_onGameStart != null && _readingLiveEvents) {
         _onGameStart!(room.gameState!);
+      }
     }
   }
 
