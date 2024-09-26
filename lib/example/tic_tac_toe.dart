@@ -66,7 +66,8 @@ class TicTacToe extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     gameState["board"][event.payload["position"]] = gameState["currentPlayer"];
     gameState["currentPlayer"] += 1;
     gameState["currentPlayer"] %= players.length;
@@ -79,7 +80,8 @@ class TicTacToe extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     if (players.length < 2) gameState["hasRequiredPlayers"] = false;
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;

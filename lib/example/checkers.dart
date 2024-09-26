@@ -227,7 +227,8 @@ class Checkers extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     final board = toBoard(gameState["board"]);
     final route = CheckersRoute.fromJson(event.payload["route"]);
     if (!route.isPassive) {
@@ -258,7 +259,8 @@ class Checkers extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
     }

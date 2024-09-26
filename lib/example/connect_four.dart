@@ -55,7 +55,8 @@ class ConnectFour extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     int position = event.payload["position"];
     for (int newPosition = position + width * (height - 1);
         newPosition >= 0;
@@ -75,7 +76,8 @@ class ConnectFour extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
     }

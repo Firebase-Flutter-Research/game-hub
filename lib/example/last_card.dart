@@ -231,7 +231,8 @@ class LastCard extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     if (event.payload["isPlace"] ?? false) {
       var card = LastCardCard.fromJson(event.payload["card"]);
       final cardType = LastCardType.fromValue(card.value);
@@ -283,7 +284,8 @@ class LastCard extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     int leaveIndex = gameState["turnOrder"].indexOf(player);
     if (leaveIndex == gameState["currentPlayer"]) {
       gameState["currentPlayer"] = (gameState["currentPlayer"] +

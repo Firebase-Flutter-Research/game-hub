@@ -47,7 +47,8 @@ abstract class Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random});
+      required Random random,
+      required void Function(void Function()) setRoomData});
 
   // Handle when player leaves room.
   void onPlayerLeave(
@@ -55,7 +56,8 @@ abstract class Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random});
+      required Random random,
+      required void Function(void Function()) setRoomData});
 
   // Determine when the game has ended and return game end data.
   Map<String, dynamic>? checkGameEnd(

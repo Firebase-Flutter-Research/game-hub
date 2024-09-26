@@ -68,10 +68,10 @@ class Room {
     players.add(player);
   }
 
-  void leaveRoom(Player player) {
+  void leaveRoom(Player player, void Function(void Function()) setRoomData) {
     if (!players.contains(player)) return;
     players.remove(player);
-    onPlayerLeave(player, players);
+    onPlayerLeave(player, players, setRoomData);
   }
 
   CheckResult checkStartGame() {
@@ -108,24 +108,28 @@ class Room {
         host: host);
   }
 
-  void processEvent(GameEvent event) {
+  void processEvent(
+      GameEvent event, void Function(void Function()) setRoomData) {
     if (!gameStarted) return;
     game.processEvent(
         event: event,
         gameState: gameState!,
         players: players,
         host: host,
-        random: random);
+        random: random,
+        setRoomData: setRoomData);
   }
 
-  void onPlayerLeave(Player player, List<Player> updatedPlayers) {
+  void onPlayerLeave(Player player, List<Player> updatedPlayers,
+      void Function(void Function()) setRoomData) {
     if (gameStarted) {
       game.onPlayerLeave(
           player: player,
           gameState: gameState!,
           players: players,
           host: host,
-          random: random);
+          random: random,
+          setRoomData: setRoomData);
     }
   }
 

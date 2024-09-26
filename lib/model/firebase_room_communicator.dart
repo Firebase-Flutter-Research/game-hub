@@ -54,23 +54,24 @@ class FirebaseRoomCommunicator {
         .collection(_eventsCollectionName)
         .snapshots()
         .listen((eventSnapshots) async {
-      _updateConcatenatedEventReference(eventSnapshots.docs);
+      setRoomData(() {
+        _updateConcatenatedEventReference(eventSnapshots.docs);
 
-      final events = _fromConcatenatedEvents(
-          eventSnapshots.docs.map((e) => e.data()).toList());
-      final filteredEvents = events
-          .toSet()
-          .difference(room.events.toSet())
-          .toList()
-        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        final events = _fromConcatenatedEvents(
+            eventSnapshots.docs.map((e) => e.data()).toList());
+        final filteredEvents = events
+            .toSet()
+            .difference(room.events.toSet())
+            .toList()
+          ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-      for (final event in filteredEvents) {
-        _processEvent(event);
-      }
+        for (final event in filteredEvents) {
+          _processEvent(event);
+        }
 
-      room.events.addAll(filteredEvents);
-      _roomDataStreamController.add(room.getRoomData());
-      _readingLiveEvents = true;
+        room.events.addAll(filteredEvents);
+        _readingLiveEvents = true;
+      });
     });
   }
 
@@ -131,8 +132,13 @@ class FirebaseRoomCommunicator {
 
   Stream<RoomData> get roomDataStream => _roomDataStreamController.stream;
 
+  void setRoomData(void Function() callback) {
+    callback();
+    _roomDataStreamController.add(room.getRoomData());
+  }
+
   Future<void> leaveRoom() async {
-    room.leaveRoom(player);
+    room.leaveRoom(player, setRoomData);
 
     try {
       await _sendEvent(EventType.playerLeave);
@@ -281,7 +287,7 @@ class FirebaseRoomCommunicator {
   }
 
   void _processGameEvent(GameEvent event) async {
-    room.processEvent(event);
+    room.processEvent(event, setRoomData);
     if (_onGameEvent != null && _readingLiveEvents) {
       _onGameEvent!(event, room.gameState!);
     }
@@ -305,7 +311,7 @@ class FirebaseRoomCommunicator {
   }
 
   void _processPlayerLeaveEvent(Player player) async {
-    room.leaveRoom(player);
+    room.leaveRoom(player, setRoomData);
     if (_readingLiveEvents && this.player != player) {
       if (_onPlayerLeave != null) _onPlayerLeave!(player);
     }

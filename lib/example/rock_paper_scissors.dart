@@ -66,7 +66,8 @@ class RockPaperScissors extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {
+      required Random random,
+      required void Function(void Function()) setRoomData}) {
     var index = players.indexOf(event.author);
     final List<RockPaperScissorsChoice?> choices = gameState["choices"];
     choices[index] = RockPaperScissorsChoice.fromKey(event.payload["choice"]);
@@ -78,7 +79,8 @@ class RockPaperScissors extends Game {
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host,
-      required Random random}) {}
+      required Random random,
+      required void Function(void Function()) setRoomData}) {}
 
   @override
   Map<String, dynamic>? checkGameEnd(
