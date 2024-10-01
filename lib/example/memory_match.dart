@@ -9,9 +9,9 @@ class NotPlayerTurn extends CheckResultFailure {
   const NotPlayerTurn() : super("Not your turn");
 }
 
-class NotSelectable extends CheckResultFailure {
-  const NotSelectable() : super("Can't choose that option");
-}
+// class NotSelectable extends CheckResultFailure {
+//   const NotSelectable() : super("Can't choose that option");
+// }
 
 class CardAlreadyFlipped extends CheckResultFailure {
   const CardAlreadyFlipped() : super("Card is already flipped");
@@ -68,11 +68,13 @@ class MemoryMatch extends Game {
     if (players[gameState["currentPlayer"]] != player) {
       return const NotPlayerTurn();
     }
-    if (event["position"] < 0 || event["position"] >= 30) {
-      return const NotSelectable();
-    }
-    if (gameState["layout"][event["position"]].isFlipped()) {
-      return const CardAlreadyFlipped();
+    // if (event["position"] < 0 || event["position"] >= 30) {
+    //   return const NotSelectable();
+    // }
+    if (event["position"] >= 0) {
+      if (gameState["layout"][event["position"]].isFlipped()) {
+        return const CardAlreadyFlipped();
+      }
     }
     return const CheckResultSuccess();
   }
@@ -88,8 +90,10 @@ class MemoryMatch extends Game {
     int position = event.payload["position"];
 
     gameState["currentlyFlipped"].add(position);
-    gameState["layout"][position].flipCard();
-    if (gameState["currentlyFlipped"].length >= 2) {
+    if (position >= 0 && position < gameState["layout"].length) {
+      gameState["layout"][position].flipCard();
+    }
+    if (gameState["currentlyFlipped"].length > 2) {
       MemoryCard card1 = gameState["layout"][gameState["currentlyFlipped"][0]];
       MemoryCard card2 = gameState["layout"][gameState["currentlyFlipped"][1]];
       if (card1.symbol == card2.symbol) {
@@ -98,13 +102,13 @@ class MemoryMatch extends Game {
       } else {
         card1.flipCard();
         card2.flipCard();
+        if (gameState["currentPlayer"] < players.length - 1) {
+          gameState["currentPlayer"] += 1;
+        } else {
+          gameState["currentPlayer"] = 0;
+        }
       }
       gameState["currentlyFlipped"] = [];
-      if (gameState["currentPlayer"] < players.length - 1) {
-        gameState["currentPlayer"] += 1;
-      } else {
-        gameState["currentPlayer"] = 0;
-      }
     }
   }
 
