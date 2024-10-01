@@ -147,6 +147,7 @@ class Room {
 
   Either<CheckResultFailure, dynamic> getGameResponse(
       Map<String, dynamic> request, Player player) {
+    if (!gameStarted) return const Left(GameHasNotStarted());
     return game.getGameResponse(
         request: request,
         player: player,
