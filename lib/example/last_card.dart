@@ -174,7 +174,6 @@ class LastCard extends Game {
       "playerCards": playerCards,
       "playedCards": [startingCard],
       "direction": 1,
-      "turnOrder": players.toList(),
     };
   }
 
@@ -282,9 +281,10 @@ class LastCard extends Game {
       {required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
+      required List<Player> oldPlayers,
       required Player host,
       required Random random}) {
-    int leaveIndex = gameState["turnOrder"].indexOf(player);
+    int leaveIndex = oldPlayers.indexOf(player);
     if (leaveIndex == gameState["currentPlayer"]) {
       gameState["currentPlayer"] = (gameState["currentPlayer"] +
               (gameState["direction"] > 0 ? 0 : -1) +
@@ -293,7 +293,6 @@ class LastCard extends Game {
     } else if (leaveIndex < gameState["currentPlayer"]) {
       gameState["currentPlayer"] -= 1;
     }
-    gameState["turnOrder"] = players.toList();
   }
 
   @override
