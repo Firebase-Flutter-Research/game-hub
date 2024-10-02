@@ -10,6 +10,7 @@ class RoomsPage extends StatefulWidget {
 }
 
 class _RoomsPageState extends State<RoomsPage> {
+  static const int minutesBeforeHide = 15;
   @override
   Widget build(BuildContext context) {
     final gameManager = GameManager.instance;
@@ -39,6 +40,18 @@ class _RoomsPageState extends State<RoomsPage> {
                       }
                       return Column(
                           children: snapshot.data!.docs
+                              .where((doc) =>
+                                  (doc["lastUpdateTimestamp"] == null ||
+                                      Timestamp.now()
+                                              .toDate()
+                                              .difference(
+                                                  doc["lastUpdateTimestamp"]
+                                                      .toDate())
+                                              .inMinutes <
+                                          minutesBeforeHide) &&
+                                  !doc["gameStarted"] &&
+                                  doc["playerCount"] <
+                                      gameManager.game!.playerLimit)
                               .map((doc) => _roomListItem(context, doc))
                               .toList());
                     },

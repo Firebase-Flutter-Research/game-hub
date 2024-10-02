@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fire_engine/example/connect_four.dart';
 import 'package:flutter_fire_engine/example/checkers.dart';
+import 'package:flutter_fire_engine/example/connect_four.dart';
 import 'package:flutter_fire_engine/example/last_card.dart';
+import 'package:flutter_fire_engine/example/memory_match.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/room.dart';
 import 'package:flutter_fire_engine/page/chat_room.dart';
-import 'package:flutter_fire_engine/page/connect_four.dart';
 import 'package:flutter_fire_engine/page/checkers.dart';
+import 'package:flutter_fire_engine/page/connect_four.dart';
 import 'package:flutter_fire_engine/page/last_card.dart';
+import 'package:flutter_fire_engine/page/memory_match.dart';
 import 'package:flutter_fire_engine/page/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
 
@@ -36,6 +38,8 @@ class _InGamePageState extends State<InGamePage> {
         return RockPaperScissorsPage(roomData: roomData);
       case LastCard:
         return LastCardPage(roomData: roomData);
+      case MemoryMatch:
+        return MemoryMatchPage(roomData: roomData);
       default:
         return Container();
     }

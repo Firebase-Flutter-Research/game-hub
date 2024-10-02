@@ -97,7 +97,8 @@ class FirebaseRoomCommunicator {
             .add({
           "host": player.toJson(),
           "playerCount": 0,
-          "gameStarted": false
+          "gameStarted": false,
+          "lastUpdateTimestamp": FieldValue.serverTimestamp()
         }),
         Room.createRoom(game: game, host: player));
     await firebaseRoomCommunicator._sendEvent(EventType.playerJoin);
@@ -253,6 +254,8 @@ class FirebaseRoomCommunicator {
         }
       });
     });
+    await roomReference
+        .update({"lastUpdateTimestamp": FieldValue.serverTimestamp()});
   }
 
   void _processEvent(Event event) {
