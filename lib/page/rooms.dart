@@ -39,6 +39,18 @@ class _RoomsPageState extends State<RoomsPage> {
                       }
                       return Column(
                           children: snapshot.data!.docs
+                              .where((doc) =>
+                                  doc["lastUpdateTimestamp"] == null ||
+                                  (Timestamp.now()
+                                              .toDate()
+                                              .difference(
+                                                  doc["lastUpdateTimestamp"]
+                                                      .toDate())
+                                              .inMinutes <
+                                          1 &&
+                                      !doc["gameStarted"] &&
+                                      doc["playerCount"] <
+                                          gameManager.game!.playerLimit))
                               .map((doc) => _roomListItem(context, doc))
                               .toList());
                     },
