@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:either_dart/either.dart';
 import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/firebase_room_communicator.dart';
 import 'package:flutter_fire_engine/model/game.dart';
@@ -42,6 +43,11 @@ class GameManager {
   // Check if a game has been assigned.
   bool hasGame() {
     return _game != null;
+  }
+
+  // Check if a room has been assigned.
+  bool hasRoom() {
+    return _firebaseRoomCommunicator != null;
   }
 
   // Set player's name.
@@ -176,5 +182,19 @@ class GameManager {
   void setOnOtherEvent(void Function(Event) callback) {
     if (_firebaseRoomCommunicator == null) return;
     _firebaseRoomCommunicator!.setOnOtherEvent(callback);
+  }
+
+  Either<CheckResultFailure, dynamic> getGameResponse(
+      Map<String, dynamic> request) {
+    if (game == null) throw Exception("Game not found. Ensure game is set.");
+    if (_firebaseRoomCommunicator == null) {
+      throw Exception("A room has not been joined.");
+    }
+    return _firebaseRoomCommunicator!.getGameResponse(request);
+  }
+
+  void setOnGameResponseFailure(void Function(CheckResultFailure) callback) {
+    if (_firebaseRoomCommunicator == null) return;
+    _firebaseRoomCommunicator!.setOnGameResponseFailure(callback);
   }
 }

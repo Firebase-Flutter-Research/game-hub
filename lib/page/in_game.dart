@@ -119,7 +119,9 @@ class _InGamePageState extends State<InGamePage> {
             builder: (context, snapshot) {
               if (snapshot.data == null || !context.mounted) return Container();
               final roomData = snapshot.data!;
-              if (!roomData.gameStarted) return _lobbyWidget(context, roomData);
+              if (!gameManager.hasRoom() || !roomData.gameStarted) {
+                return _lobbyWidget(context, roomData);
+              }
               return getGameWidget(roomData);
             }),
         floatingActionButton: ChatRoomButton(),

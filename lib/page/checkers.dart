@@ -25,6 +25,15 @@ class _CheckersPageState extends State<CheckersPage> {
   void initState() {
     super.initState();
     gameManager = GameManager.instance;
+
+    gameManager.setOnGameResponseFailure((failure) {
+      if (!context.mounted) return;
+      if (failure.message != null) {
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(failure.message!)));
+      }
+    });
   }
 
   @override
@@ -43,31 +52,29 @@ class _CheckersPageState extends State<CheckersPage> {
   }
 
   Widget _checkerboardWidget(BuildContext context, RoomData roomData) {
-    final board = Checkers.toBoard(roomData.gameState!["board"]);
+    final board = List<List<CheckersPiece?>>.from(gameManager
+        .getGameResponse({"type": CheckersRequestType.getBoard}).right);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: board
           .mapIndexed((i, row) => Row(
                 mainAxisSize: MainAxisSize.min,
                 children: row
-                    .mapIndexed(
-                        (j, piece) => _checkersTileWidget(i, j, piece, board))
+                    .mapIndexed((j, piece) => _checkersTileWidget(i, j, piece))
                     .toList(),
               ))
           .toList(),
     );
   }
 
-  Widget _checkersTileWidget(
-      int i, int j, CheckersPiece? piece, List<List<CheckersPiece?>> board) {
+  Widget _checkersTileWidget(int i, int j, CheckersPiece? piece) {
     Widget tileChild;
     Color pieceColor;
     double tileWidth = min(MediaQuery.sizeOf(context).width / 9, 50);
 
     if (piece != null) {
-      pieceColor = Checkers.getIndexFromPiece(piece) == 0
-          ? Colors.deepPurple
-          : Colors.red[400]!;
+      pieceColor = gameManager.getGameResponse(
+          {"type": CheckersRequestType.getPieceColor, "piece": piece}).right;
       tileChild = FractionallySizedBox(
         heightFactor: 0.75,
         widthFactor: 0.75,
@@ -98,18 +105,22 @@ class _CheckersPageState extends State<CheckersPage> {
 
     return GestureDetector(
       onTap: () {
-        if (roomData.players[roomData.gameState!["currentPlayer"]] !=
-            gameManager.player) {
+        if (!gameManager.getGameResponse(
+            {"type": CheckersRequestType.isCurrentPlayer}).isRight) {
           return;
         }
-        if (piece != null &&
-            roomData.players.indexOf(gameManager.player) ==
-                Checkers.getIndexFromPiece(piece)) {
+        if (possibleRoutes == null) {
           setState(() {
-            possibleRoutes = piece.possibleRoutes(Pair(i, j), board);
+            final routesResponse = gameManager.getGameResponse({
+              "type": CheckersRequestType.getPossibleRoutes,
+              "position": Pair(i, j)
+            });
+            if (routesResponse.isRight) {
+              possibleRoutes = routesResponse.right;
+            }
           });
         } else {
-          if (possibleRoutes != null) {
+          if (piece == null) {
             CheckersRoute? route = possibleRoutes
                 ?.where((route) => route.end == Pair(i, j))
                 .firstOrNull;
@@ -120,6 +131,26 @@ class _CheckersPageState extends State<CheckersPage> {
             }
             setState(() {
               possibleRoutes = null;
+            });
+          } else if (possibleRoutes?.first.start == Pair(i, j) ||
+              !gameManager.getGameResponse({
+                "type": CheckersRequestType.playerOwnsPiece,
+                "piece": piece
+              }).right) {
+            setState(() {
+              possibleRoutes = null;
+            });
+          } else {
+            setState(() {
+              final routesResponse = gameManager.getGameResponse({
+                "type": CheckersRequestType.getPossibleRoutes,
+                "position": Pair(i, j)
+              });
+              if (routesResponse.isRight) {
+                possibleRoutes = routesResponse.right;
+              } else {
+                possibleRoutes = null;
+              }
             });
           }
         }

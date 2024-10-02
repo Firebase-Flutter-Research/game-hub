@@ -1,5 +1,7 @@
 import 'dart:math';
+import 'dart:ui';
 
+import 'package:either_dart/either.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/event.dart';
 import 'package:flutter_fire_engine/model/game.dart';
@@ -160,6 +162,14 @@ enum CheckersPiece {
       CheckersPiece.values.where((e) => e.key == key).first;
 }
 
+enum CheckersRequestType {
+  isCurrentPlayer,
+  playerOwnsPiece,
+  getPossibleRoutes,
+  getPieceColor,
+  getBoard,
+}
+
 class Checkers extends Game {
   static List<List<CheckersPiece?>> toBoard(List<String?> jsonBoard) {
     final board = <List<CheckersPiece?>>[];
@@ -285,5 +295,47 @@ class Checkers extends Game {
     if (counts[0] == 0) return {"draw": false, "winnerName": players[1].name};
     if (counts[1] == 0) return {"draw": false, "winnerName": players[0].name};
     return null;
+  }
+
+  @override
+  Either<CheckResultFailure, dynamic> getGameResponse(
+      {required Map<String, dynamic> request,
+      required Player player,
+      required Map<String, dynamic> gameState,
+      required List<Player> players,
+      required Player host}) {
+    switch (request["type"] as CheckersRequestType) {
+      case CheckersRequestType.isCurrentPlayer:
+        if (players[gameState["currentPlayer"]] != player) {
+          return const Left(CheckResultFailure("Not your turn."));
+        }
+        return const Right(null);
+      case CheckersRequestType.playerOwnsPiece:
+        return Right(
+            players.indexOf(player) == getIndexFromPiece(request["piece"]));
+      case CheckersRequestType.getPossibleRoutes:
+        final board = toBoard(gameState["board"]);
+        final position = request["position"];
+        final piece = board[position.key][position.value];
+        if (piece == null) {
+          return const Left(CheckResultFailure());
+        }
+        if (players.indexOf(player) != getIndexFromPiece(piece)) {
+          return const Left(CheckResultFailure("Not your piece."));
+        }
+        final routes =
+            piece.possibleRoutes(Pair(position.key, position.value), board);
+        if (routes.isEmpty) {
+          return const Left(CheckResultFailure("Piece can't move."));
+        }
+        return Right(routes);
+
+      case CheckersRequestType.getPieceColor:
+        return Right(getIndexFromPiece(request["piece"]) == 0
+            ? const Color.fromRGBO(103, 58, 183, 1)
+            : const Color.fromRGBO(239, 80, 80, 1));
+      case CheckersRequestType.getBoard:
+        return Right(toBoard(gameState["board"]));
+    }
   }
 }
