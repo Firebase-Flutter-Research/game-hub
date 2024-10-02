@@ -28,7 +28,7 @@ class MemoryMatchPage extends StatelessWidget {
 
   Widget _cardWidgetBase(Color color, double size, [Widget? child]) {
     return Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(size / 20),
         child: Align(
           alignment: Alignment.center,
           child: Container(
@@ -64,13 +64,10 @@ class MemoryMatchPage extends StatelessWidget {
       [void Function()? callback]) {
     String symbol = "";
     Color color = Colors.lightBlue;
-    bool visibility = true;
+    bool visibility = card.playerMatched == null;
     if (card.isFlipped()) {
       symbol = card.symbol;
       color = Colors.green;
-    }
-    if (card.playerMatched != null) {
-      visibility = false;
     }
     return Visibility(
       visible: visibility,
@@ -92,12 +89,12 @@ class MemoryMatchPage extends StatelessWidget {
     double screenWidth = MediaQuery.sizeOf(context).width;
     double screenHeight = MediaQuery.sizeOf(context).height;
     double cardSize = min(screenWidth / 7, screenHeight / 9);
-
-    for (int i = 0; i < 30; i += 6) {
+    int numberOfColumns = sqrt(MemoryMatch.numberOfPairs * 2).toInt();
+    for (int i = 0; i < MemoryMatch.numberOfPairs * 2; i += numberOfColumns) {
       rows.add(Row(
           mainAxisSize: MainAxisSize.min,
           children: List<MemoryCard>.from(roomData.gameState!["layout"])
-              .sublist(i, i + 6)
+              .sublist(i, i + numberOfColumns)
               .mapIndexed((j, e) => Padding(
                     padding: const EdgeInsets.all(2.0),
                     child: SizedBox(

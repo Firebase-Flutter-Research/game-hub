@@ -9,9 +9,9 @@ class NotPlayerTurn extends CheckResultFailure {
   const NotPlayerTurn() : super("Not your turn");
 }
 
-// class NotSelectable extends CheckResultFailure {
-//   const NotSelectable() : super("Can't choose that option");
-// }
+class NotSelectable extends CheckResultFailure {
+  const NotSelectable() : super("Can't choose that option");
+}
 
 class CardAlreadyFlipped extends CheckResultFailure {
   const CardAlreadyFlipped() : super("Card is already flipped");
@@ -30,23 +30,8 @@ class MemoryMatch extends Game {
   @override
   int get playerLimit => 4;
 
-  @override
-  Map<String, dynamic> getInitialGameState(
-      {required List<Player> players,
-      required Player host,
-      required Random random}) {
-    // TODO: implement getInitialGameState
-    List<MemoryCard> cards = [];
-    int initialAscii = ascii.encode("A")[0];
-    for (var i = 0; i < 15; i++) {
-      cards.addAll([
-        MemoryCard(symbol: String.fromCharCode(initialAscii + i)),
-        MemoryCard(symbol: String.fromCharCode(initialAscii + i))
-      ]);
-    }
-    cards.shuffle(random);
-    return {"currentPlayer": 0, "layout": cards, "currentlyFlipped": []};
-  }
+  static const int numberOfPairs = 15;
+
   // gameState = {
   // "currentPlayer": index of who's ever turn it is,
   // "layout": [all cards in order they are placed],
@@ -58,20 +43,39 @@ class MemoryMatch extends Game {
   // }
 
   @override
+  Map<String, dynamic> getInitialGameState(
+      {required List<Player> players,
+      required Player host,
+      required Random random}) {
+    List<MemoryCard> cards = [];
+    int initialAscii = ascii.encode("A")[0];
+    for (var i = 0; i < numberOfPairs; i++) {
+      cards.addAll([
+        MemoryCard(symbol: String.fromCharCode(initialAscii + i)),
+        MemoryCard(symbol: String.fromCharCode(initialAscii + i))
+      ]);
+    }
+    cards.shuffle(random);
+    return {"currentPlayer": 0, "layout": cards, "currentlyFlipped": []};
+  }
+
+  @override
   CheckResult checkPerformEvent(
       {required Map<String, dynamic> event,
       required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
       required Player host}) {
-    // TODO: implement checkPerformEvent
     if (players[gameState["currentPlayer"]] != player) {
       return const NotPlayerTurn();
     }
-    // if (event["position"] < 0 || event["position"] >= 30) {
-    //   return const NotSelectable();
-    // }
-    if (event["position"] >= 0) {
+
+    if (event["position"] < -1 ||
+        event["position"] >= gameState["layout"].length) {
+      return const NotSelectable();
+    }
+
+    if (event["position"] != -1) {
       if (gameState["layout"][event["position"]].isFlipped()) {
         return const CardAlreadyFlipped();
       }
@@ -86,7 +90,6 @@ class MemoryMatch extends Game {
       required List<Player> players,
       required Player host,
       required Random random}) {
-    // TODO: implement
     int position = event.payload["position"];
 
     gameState["currentlyFlipped"].add(position);
@@ -117,11 +120,15 @@ class MemoryMatch extends Game {
       {required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
+      required List<Player> oldPlayers,
       required Player host,
       required Random random}) {
-    // TODO: implement onPlayerLeave
     if (gameState["currentPlayer"] >= players.length) {
       gameState["currentPlayer"] = 0;
+    }
+    int leaveIndex = oldPlayers.indexOf(player);
+    if (leaveIndex < gameState["currentPlayer"]) {
+      gameState["currentPlayer"]--;
     }
   }
 
@@ -131,7 +138,6 @@ class MemoryMatch extends Game {
       required List<Player> players,
       required Player host,
       required Random random}) {
-    // TODO: implement checkGameEnd
     Map<Player, int> scores = {};
     for (MemoryCard card in gameState["layout"]) {
       Player? matchedPlayer = card.playerMatched;
@@ -144,7 +150,10 @@ class MemoryMatch extends Game {
       }
     }
     List<Player> winnerList = getHighestScorePlayers(scores);
-    return {"winnerName": winnerList[0].name, "draw": winnerList.length > 1};
+    return {
+      "winnerName": winnerList.map((p) => p.name).join(", "),
+      "draw": winnerList.length == players.length
+    };
   }
 
   List<Player> getHighestScorePlayers(Map<Player, int> scores) {

@@ -74,6 +74,7 @@ class ConnectFour extends Game {
       {required Player player,
       required Map<String, dynamic> gameState,
       required List<Player> players,
+      required List<Player> oldPlayers,
       required Player host,
       required Random random}) {
     if (gameState["currentPlayer"] >= players.length) {
