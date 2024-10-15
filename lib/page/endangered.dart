@@ -59,44 +59,40 @@ class _EndangeredPageState extends State<EndangeredPage> {
             as Map<String, Map<String, Map<String, dynamic>>>;
     final difficulties = gameManager
         .getGameResponse({"type": "getDifficulties"}).right as List<String>;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: joinWidgets(
-          questions.entries
-              .map((q) => Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                          Row(
-                            children: [
-                              Text(q.key),
-                            ],
-                          ),
-                          const Divider()
-                        ] +
-                        difficulties.map((d) {
-                          final answeredQuestions =
-                              widget.roomData["answeredQuestions"]
-                                  as Set<Pair<String, String>>;
-                          return TextButton(
-                              onPressed: () {
-                                gameManager.sendGameEvent({
-                                  "type": "selectQuestion",
-                                  "category": q.key,
-                                  "difficulty": d
-                                });
-                              },
-                              child: Text(
-                                d,
-                                style: TextStyle(
-                                    decoration: answeredQuestions
-                                            .contains(Pair(q.key, d))
-                                        ? TextDecoration.lineThrough
-                                        : TextDecoration.none),
-                              ));
-                        }).toList(),
-                  ))
-              .toList(),
-          const SizedBox(height: 200, child: VerticalDivider())),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: joinWidgets(
+            questions.entries
+                .map((q) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[Text(q.key), const Divider()] +
+                          difficulties.map((d) {
+                            final answeredQuestions =
+                                widget.roomData["answeredQuestions"]
+                                    as Set<Pair<String, String>>;
+                            return TextButton(
+                                onPressed: () {
+                                  gameManager.sendGameEvent({
+                                    "type": "selectQuestion",
+                                    "category": q.key,
+                                    "difficulty": d
+                                  });
+                                },
+                                child: Text(
+                                  d,
+                                  style: TextStyle(
+                                      decoration: answeredQuestions
+                                              .contains(Pair(q.key, d))
+                                          ? TextDecoration.lineThrough
+                                          : TextDecoration.none),
+                                ));
+                          }).toList(),
+                    ))
+                .toList(),
+            const SizedBox(height: 200, child: VerticalDivider())),
+      ),
     );
   }
 
