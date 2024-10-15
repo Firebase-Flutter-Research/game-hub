@@ -198,8 +198,9 @@ class DrawMyThing extends Game {
     switch (request["type"]) {
       case "serializeLine":
         final line = request["line"] as List<Offset>;
-        return Right(
-            line.map((point) => {"x": point.dx, "y": point.dy}).toList());
+        return Right(line
+            .map((point) => {"x": point.dx.toInt(), "y": point.dy.toInt()})
+            .toList());
       case "isCurrentPlayer":
         return Right(players.indexOf(player) == gameState["currentPlayer"]);
       case "timerLimit":
@@ -257,7 +258,9 @@ class DrawMyThing extends Game {
   }
 
   List<Offset> deserializeLine(List<dynamic> jsonLine) {
-    return jsonLine.map((point) => Offset(point["x"], point["y"])).toList();
+    return jsonLine
+        .map((point) => Offset(point["x"].toDouble(), point["y"].toDouble()))
+        .toList();
   }
 
   @override

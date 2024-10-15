@@ -104,6 +104,7 @@ class _InGamePageState extends State<InGamePage> {
           ..showSnackBar(SnackBar(content: Text(failure.message!)));
       }
     });
+    gameManager.setOnGameEvent((event, gameState) {});
   }
 
   @override
@@ -123,8 +124,7 @@ class _InGamePageState extends State<InGamePage> {
             builder: (context, snapshot) {
               if (snapshot.data == null || !context.mounted) return Container();
               final roomData = snapshot.data!;
-              if (!gameManager.hasRoom()) return Container();
-              if (!roomData.gameStarted) {
+              if (!gameManager.hasRoom() || !roomData.gameStarted) {
                 return _lobbyWidget(context, roomData);
               }
               return getGameWidget(roomData);

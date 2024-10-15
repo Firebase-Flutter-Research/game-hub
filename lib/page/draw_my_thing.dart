@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/example/draw_my_thing.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/player.dart';
 import 'package:flutter_fire_engine/model/room.dart';
@@ -53,7 +53,9 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
         case "selectWord":
           timerVal = gameManager.getGameResponse({"type": "timerLimit"}).right;
           timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-            if (!gameManager.hasRoom() ||
+            if (gameManager.game.runtimeType != DrawMyThing ||
+                !gameManager.hasRoom() ||
+                !widget.roomData.gameStarted ||
                 widget.roomData.gameState!["selectingWord"]) {
               timer.cancel();
               return;
@@ -73,6 +75,12 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
           lines.clear();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    if (timer.isActive) timer.cancel();
   }
 
   @override
