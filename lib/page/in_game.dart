@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/checkers.dart';
 import 'package:flutter_fire_engine/example/connect_four.dart';
+import 'package:flutter_fire_engine/example/draw_my_thing.dart';
 import 'package:flutter_fire_engine/example/endangered.dart';
 import 'package:flutter_fire_engine/example/last_card.dart';
 import 'package:flutter_fire_engine/example/memory_match.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_fire_engine/model/room.dart';
 import 'package:flutter_fire_engine/page/chat_room.dart';
 import 'package:flutter_fire_engine/page/checkers.dart';
 import 'package:flutter_fire_engine/page/connect_four.dart';
+import 'package:flutter_fire_engine/page/draw_my_thing.dart';
 import 'package:flutter_fire_engine/page/endangered.dart';
 import 'package:flutter_fire_engine/page/last_card.dart';
 import 'package:flutter_fire_engine/page/memory_match.dart';
@@ -42,6 +44,8 @@ class _InGamePageState extends State<InGamePage> {
         return LastCardPage(roomData: roomData);
       case MemoryMatch:
         return MemoryMatchPage(roomData: roomData);
+      case DrawMyThing:
+        return DrawMyThingWidget(roomData: roomData);
       case Endangered:
         return EndangeredPage(roomData: roomData);
       default:
@@ -104,6 +108,7 @@ class _InGamePageState extends State<InGamePage> {
           ..showSnackBar(SnackBar(content: Text(failure.message!)));
       }
     });
+    gameManager.setOnGameEvent((event, gameState) {});
   }
 
   @override
