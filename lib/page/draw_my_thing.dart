@@ -27,7 +27,7 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
   bool isOutOfBounds = false;
   final textController = TextEditingController();
   final scrollController = ScrollController();
-  late Timer timer;
+  Timer? timer;
 
   @override
   void initState() {
@@ -36,15 +36,6 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
     gameManager.setOnGameEvent((event, gameState) {
       switch (event.payload["type"]) {
         case "guess":
-          if (gameManager.getGameResponse({"type": "isCurrentPlayer"}).right &&
-              gameState["currentWord"].toLowerCase() ==
-                  event.payload["word"].trim().toLowerCase() &&
-              (gameState["currentScorers"] as List<Player>).length == 1) {
-            ScaffoldMessenger.of(context)
-              ..removeCurrentSnackBar()
-              ..showSnackBar(const SnackBar(
-                  content: Text("A player has guessed correctly")));
-          }
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!scrollController.hasClients) return;
             scrollToBottom();
@@ -80,7 +71,7 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
   @override
   void dispose() {
     super.dispose();
-    if (timer.isActive) timer.cancel();
+    timer?.cancel();
   }
 
   @override
@@ -99,13 +90,30 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
     );
   }
 
+  Widget _scoresWidget(Map<Player, int> scores) {
+    return Text(
+        "Scores — ${scores.entries.map((entry) => "${entry.key.name}: ${entry.value}").join(", ")}");
+  }
+
   Widget _drawWidget() {
-    final rescaledSize = min(MediaQuery.of(context).size.width * 3 / 4, size);
+    final rescaledSize =
+        min(MediaQuery.of(context).size.width * 3 / 4, size * 3 / 4);
     if (widget.roomData.gameState!["selectingWord"]) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: <Widget>[const Text("Select a word:")] +
+          children: <Widget>[
+                _scoresWidget(
+                    widget.roomData.gameState!["scores"] as Map<Player, int>),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                      "Round ${widget.roomData.gameState!["roundCount"] + 1}/${gameManager.getGameResponse({
+                        "type": "totalRoundCount"
+                      }).right}"),
+                ),
+                const Text("Select a word:")
+              ] +
               List<String>.from(widget.roomData.gameState!["wordOptions"])
                   .map((e) => TextButton(
                       onPressed: () {
@@ -123,6 +131,12 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
+              "Round ${widget.roomData.gameState!["roundCount"] + 1}/${gameManager.getGameResponse({
+                    "type": "totalRoundCount"
+                  }).right}",
+              style: const TextStyle(fontSize: 20),
+            ),
+            Text(
               "$timerVal",
               style: const TextStyle(fontSize: 20),
             ),
@@ -138,68 +152,100 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.black),
                 ),
-                child: FittedBox(
-                  child: Listener(
-                    onPointerDown: (event) {
-                      setState(() {
-                        currentLine = [];
-                        lines.add(currentLine);
-                      });
-                    },
-                    onPointerUp: (event) {
-                      gameManager.sendGameEvent({
-                        "type": "draw",
-                        "line": gameManager.getGameResponse({
-                          "type": "serializeLine",
-                          "line": currentLine
-                        }).right
-                      });
-                    },
-                    onPointerMove: (event) {
-                      setState(() {
-                        final box = key.currentContext?.findRenderObject()
-                            as RenderBox?;
-                        if (box == null) return;
-                        final position = box.globalToLocal(event.position);
-                        if (position.dx < 0 ||
-                            position.dx >= box.size.width ||
-                            position.dy < 0 ||
-                            position.dy >= box.size.height) {
-                          if (!isOutOfBounds) {
-                            gameManager.sendGameEvent({
-                              "type": "draw",
-                              "line": gameManager.getGameResponse({
-                                "type": "serializeLine",
-                                "line": currentLine
-                              }).right
-                            });
+                child: Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    FittedBox(
+                      child: Listener(
+                        onPointerDown: (event) {
+                          setState(() {
                             currentLine = [];
                             lines.add(currentLine);
-                            isOutOfBounds = true;
-                          }
-                        } else {
-                          if ((position -
-                                      (currentLine.lastOrNull ?? Offset.zero))
-                                  .distance >
-                              5) {
-                            currentLine.add(position);
-                          }
-                          isOutOfBounds = false;
-                        }
-                      });
-                    },
-                    child: _drawingImageWidget(lines),
-                  ),
+                          });
+                        },
+                        onPointerUp: (event) {
+                          gameManager.sendGameEvent({
+                            "type": "draw",
+                            "line": gameManager.getGameResponse({
+                              "type": "serializeLine",
+                              "line": currentLine
+                            }).right
+                          });
+                        },
+                        onPointerMove: (event) {
+                          setState(() {
+                            final box = key.currentContext?.findRenderObject()
+                                as RenderBox?;
+                            if (box == null) return;
+                            final position = box.globalToLocal(event.position);
+                            if (position.dx < 0 ||
+                                position.dx >= box.size.width ||
+                                position.dy < 0 ||
+                                position.dy >= box.size.height) {
+                              if (!isOutOfBounds) {
+                                gameManager.sendGameEvent({
+                                  "type": "draw",
+                                  "line": gameManager.getGameResponse({
+                                    "type": "serializeLine",
+                                    "line": currentLine
+                                  }).right
+                                });
+                                currentLine = [];
+                                lines.add(currentLine);
+                                isOutOfBounds = true;
+                              }
+                            } else {
+                              if ((position -
+                                          (currentLine.lastOrNull ??
+                                              Offset.zero))
+                                      .distance >
+                                  5) {
+                                currentLine.add(position);
+                              }
+                              isOutOfBounds = false;
+                            }
+                          });
+                        },
+                        child: _drawingImageWidget(lines),
+                      ),
+                    ),
+                    TextButton(
+                        onPressed: () {
+                          if (lines.isEmpty) return;
+                          lines.removeLast();
+                          gameManager.sendGameEvent({"type": "undo"});
+                        },
+                        child: const Text("Undo")),
+                  ],
                 ),
               ),
             ),
-            TextButton(
-                onPressed: () {
-                  if (lines.isEmpty) return;
-                  lines.removeLast();
-                  gameManager.sendGameEvent({"type": "undo"});
-                },
-                child: const Text("Undo"))
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                  height: 150,
+                  width: rescaledSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    controller: scrollController,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: (widget
+                                      .roomData.gameState!["currentGuesses"]
+                                  as List<Pair<Player, String>>)
+                              .expand((guess) => [
+                                    Text("${guess.key.name}: ${guess.value}"),
+                                    const Divider()
+                                  ])
+                              .toList()),
+                    ),
+                  )),
+            ),
           ],
         ),
       ),
@@ -210,13 +256,36 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
     final rescaledSize =
         min(MediaQuery.of(context).size.width * 2 / 3, size * 2 / 3);
     if (widget.roomData.gameState!["selectingWord"]) {
-      return const Center(child: Text("Waiting for player to select word..."));
+      return Center(
+          child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _scoresWidget(
+              widget.roomData.gameState!["scores"] as Map<Player, int>),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+                "Round ${widget.roomData.gameState!["roundCount"] + 1}/${gameManager.getGameResponse({
+                  "type": "totalRoundCount"
+                }).right}"),
+          ),
+          Text("Waiting for ${gameManager.getGameResponse({
+                    "type": "getCurrentPlayer"
+                  }).right.name} to select a word..."),
+        ],
+      ));
     }
     return Center(
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Text(
+              "Round ${widget.roomData.gameState!["roundCount"] + 1}/${gameManager.getGameResponse({
+                    "type": "totalRoundCount"
+                  }).right}",
+              style: const TextStyle(fontSize: 20),
+            ),
             Text(
               "$timerVal",
               style: const TextStyle(fontSize: 20),
