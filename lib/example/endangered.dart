@@ -66,6 +66,9 @@ class Endangered extends Game {
       case "getCurrentQuestion":
         final question = gameState["currentQuestion"] as Pair<String, String>;
         return Right(questions[question.key]![question.value]!);
+      case "getCurrentCorrectIndex":
+        final question = gameState["currentQuestion"] as Pair<String, String>;
+        return Right(questions[question.key]![question.value]!["correctIndex"]);
       case "getDifficulties":
         return const Right(["1", "2", "3", "4", "5"]);
     }
@@ -185,7 +188,7 @@ class Endangered extends Game {
     switch (gameState["state"]) {
       case "selecting":
         if (gameState["currentSelector"] == player) {
-          gameState["currentSelector"] = players.first;
+          gameState["currentSelector"] = players.firstOrNull;
         }
         break;
       case "buzzing":

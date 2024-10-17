@@ -18,10 +18,38 @@ class EndangeredPage extends StatefulWidget {
 class _EndangeredPageState extends State<EndangeredPage> {
   late GameManager gameManager;
 
+  void _sendSnackBar(String message) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   void initState() {
     super.initState();
     gameManager = GameManager.instance;
+    gameManager.setOnGameEvent((event, gameState) {
+      if (event["type"] == "answerQuestion" &&
+          gameState["state"] == "selecting") {
+        final question =
+            gameManager.getGameResponse({"type": "getCurrentQuestion"}).right
+                as Map<String, dynamic>;
+        final correctIndex = gameManager
+            .getGameResponse({"type": "getCurrentCorrectIndex"}).right as int;
+        if (event["index"] == correctIndex) {
+          if (gameManager.player != event.author) {
+            _sendSnackBar(
+                "Question was answered correctly. Correct answer was \"${question["answers"][correctIndex]}\"");
+          } else {
+            _sendSnackBar("Question was answered correctly");
+          }
+        } else {
+          _sendSnackBar(
+              "Correct answer was \"${question["answers"][correctIndex]}\"");
+        }
+      }
+    });
   }
 
   @override
@@ -37,17 +65,23 @@ class _EndangeredPageState extends State<EndangeredPage> {
     return Container();
   }
 
+  Widget _scoresWidget(Map<Player, int> scores) {
+    return Text(
+        "Scores — ${scores.entries.map((entry) => "${entry.key.name}: ${entry.value}").join(", ")}");
+  }
+
   Widget _selectingStateWidget() {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-              "It is ${widget.roomData["currentSelector"].name}'s turn to select"),
+          _scoresWidget(widget.roomData["scores"] as Map<Player, int>),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: _questionsTable(),
+            child: Text(
+                "It is ${widget.roomData["currentSelector"].name}'s turn to select"),
           ),
+          _questionsTable(),
         ],
       ),
     );
@@ -137,12 +171,10 @@ class _EndangeredPageState extends State<EndangeredPage> {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-              Text("It is ${currentAnswerer.name}'s turn to answer"),
+        children: <Widget>[
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: SizedBox(
-                    width: 300, child: Text(currentQuestion["question"])),
+                child: Text("It is ${currentAnswerer.name}'s turn to answer"),
               ),
             ] +
             (currentQuestion["answers"] as List<String>)
