@@ -144,6 +144,15 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  game_engine:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: "726608f75748b656625855f1ea7a989a9bae6ec5"
+      url: "https://github.com/Firebase-Flutter-Research/game-engine.git"
+    source: git
+    version: "1.0.0+1"
   leak_tracker:
     dependency: transitive
     description:
@@ -302,5 +311,5 @@ packages:
     source: hosted
     version: "0.5.1"
 sdks:
-  dart: ">=3.5.0 <4.0.0"
+  dart: ">=3.6.0-114.0.dev <4.0.0"
   flutter: ">=3.18.0-18.0.pre.54"

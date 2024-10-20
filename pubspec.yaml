@@ -39,6 +39,9 @@ dependencies:
   firebase_core: ^3.3.0
   pair: ^0.1.2
   either_dart: ^1.0.0
+  game_engine:
+    git:
+      url: https://github.com/Firebase-Flutter-Research/game-engine.git
 
 dev_dependencies:
   flutter_test:
