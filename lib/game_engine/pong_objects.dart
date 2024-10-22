@@ -1,7 +1,8 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/model/game_manager.dart';
+import 'package:flutter_fire_engine/model/player.dart';
 import 'package:flutter_fire_engine/model/room.dart';
 import 'package:game_engine/game_engine.dart';
 
@@ -114,14 +115,15 @@ class EnemyBarrier extends GameObject {
 }
 
 class Puck extends GameObject {
-  static const speed = 4.0;
+  static const speed = 3.0;
+  static const radius = 2.0;
 
   Offset direction;
-  final RoomData roomData;
+  RoomData roomData;
 
   bool waiting = false;
-  Offset contactPosition = Offset.zero;
-  Offset contactDirection = Offset.zero;
+
+  late GameManager gameManager;
 
   Puck(
       {required this.direction,
@@ -137,10 +139,35 @@ class Puck extends GameObject {
   }
 
   @override
-  void init(GameStateManager manager) {}
+  void init(GameStateManager manager) {
+    gameManager = GameManager.instance;
+  }
+
+  void onHit(GameStateManager manager) {
+    final other = gameManager.getGameResponse({}).right as Player;
+    final contactPosition = roomData.gameState!["positions"][other] as Offset;
+    final contactDirection = roomData.gameState!["directions"][other] as Offset;
+    position = Offset(manager.canvasSize.width, manager.canvasSize.height) -
+        contactPosition -
+        const Offset(radius, radius);
+    direction = -contactDirection;
+    waiting = false;
+  }
+
+  void onMiss(GameStateManager manager) {
+    manager.removeInstance(instance: this);
+    manager.addInstance(Puck(
+        direction: const Offset(0, -1) * Puck.speed / 5,
+        roomData: roomData,
+        position: Offset(manager.canvasSize.width / 2 - radius,
+            manager.canvasSize.height / 2 - radius)));
+    waiting = false;
+  }
 
   @override
   void update(GameStateManager manager) {
+    if (!gameManager.hasRoom() || roomData.players.length != 2) return;
+
     final xCollisions =
         manager.getCollisions(this, position + direction.scale(1, 0));
     final yCollisions =
@@ -151,39 +178,25 @@ class Puck extends GameObject {
     }
 
     final paddle = yCollisions.whereType<PlayerPaddle>().firstOrNull;
-    if (paddle != null) {
+    if (paddle != null && direction.dy > 0) {
       final relativeX = (position.dx +
               hitBox!.size.dx / 2 -
               paddle.position.dx -
               PlayerPaddle.length / 2) /
           PlayerPaddle.length *
-          10;
+          5;
       direction = normalize(Offset(relativeX, -1)) * speed;
-    }
-
-    // TODO: Remove this case, other player's device handles this
-    final enemyPaddle = yCollisions.whereType<EnemyPaddle>().firstOrNull;
-    if (enemyPaddle != null) {
-      final relativeX = (position.dx +
-              hitBox!.size.dx / 2 -
-              enemyPaddle.position.dx -
-              PlayerPaddle.length / 2) /
-          PlayerPaddle.length *
-          10;
-      contactPosition = position;
-      contactDirection = normalize(Offset(relativeX, 1)) * speed;
-      if (!waiting) {
-        Future.delayed(const Duration(milliseconds: 400), () {
-          // TODO: This logic should happen when a Firebase response has been received
-          position = contactPosition;
-          direction = contactDirection;
-          waiting = false;
-        });
-      }
+      gameManager.sendGameEvent({
+        "type": "hit",
+        "px": position.dx + radius,
+        "py": position.dy + radius,
+        "dx": direction.dx,
+        "dy": direction.dy
+      });
     }
 
     final barrier = yCollisions.whereType<EnemyBarrier>().firstOrNull;
-    if (barrier != null) {
+    if (barrier != null && direction.dy < 0) {
       waiting = true;
       direction = Offset.zero;
       position = Offset(position.dx, PlayerPaddle.height);
@@ -191,15 +204,14 @@ class Puck extends GameObject {
 
     position += direction;
 
-    // TODO: Fix new ball direction to face the loser
-    // TODO: Score when ball goes out of bounds
-    if (position.dy < 0 || position.dy >= manager.canvasSize.height) {
+    if (position.dy > manager.canvasSize.height) {
+      gameManager.sendGameEvent({"type": "miss"});
       manager.removeInstance(instance: this);
       manager.addInstance(Puck(
           direction: const Offset(0, 1) * Puck.speed / 5,
           roomData: roomData,
-          position: Offset(manager.canvasSize.width / 2 - 2,
-              manager.canvasSize.height / 2 - 2)));
+          position: Offset(manager.canvasSize.width / 2 - radius,
+              manager.canvasSize.height / 2 - radius)));
     }
   }
 
