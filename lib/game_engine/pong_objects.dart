@@ -23,7 +23,7 @@ class Wall extends GameObject {
   void init(GameStateManager manager) {}
 
   @override
-  void update(GameStateManager manager) {}
+  void update(double deltaTime, GameStateManager manager) {}
 }
 
 class PlayerPaddle extends GameObject {
@@ -48,8 +48,8 @@ class PlayerPaddle extends GameObject {
   void init(GameStateManager manager) {}
 
   @override
-  void update(GameStateManager manager) {
-    if (manager.pointerDown && containsPoint(manager.pointerPosition)) {
+  void update(double deltaTime, GameStateManager manager) {
+    if (manager.pointerDown) {
       grabbed = true;
     }
     if (grabbed) {
@@ -83,7 +83,7 @@ class EnemyPaddle extends GameObject {
   void init(GameStateManager manager) {}
 
   @override
-  void update(GameStateManager manager) {
+  void update(double deltaTime, GameStateManager manager) {
     final puck = manager.getInstancesWhereType<Puck>().firstOrNull;
     if (puck != null) {
       position = Offset(
@@ -111,11 +111,11 @@ class EnemyBarrier extends GameObject {
   void init(GameStateManager manager) {}
 
   @override
-  void update(GameStateManager manager) {}
+  void update(double deltaTime, GameStateManager manager) {}
 }
 
 class Puck extends GameObject {
-  static const speed = 3.0;
+  static const speed = 200.0;
   static const radius = 2.0;
 
   Offset direction;
@@ -165,13 +165,13 @@ class Puck extends GameObject {
   }
 
   @override
-  void update(GameStateManager manager) {
+  void update(double deltaTime, GameStateManager manager) {
     if (!gameManager.hasRoom() || roomData.players.length != 2) return;
 
-    final xCollisions =
-        manager.getCollisions(this, position + direction.scale(1, 0));
-    final yCollisions =
-        manager.getCollisions(this, position + direction.scale(0, 1));
+    final xCollisions = manager.getCollisions(
+        this, position + direction.scale(1, 0) * deltaTime);
+    final yCollisions = manager.getCollisions(
+        this, position + direction.scale(0, 1) * deltaTime);
 
     if (xCollisions.whereType<Wall>().isNotEmpty) {
       direction = direction.scale(-1, 1);
@@ -202,7 +202,7 @@ class Puck extends GameObject {
       position = Offset(position.dx, PlayerPaddle.height);
     }
 
-    position += direction;
+    position += direction * deltaTime;
 
     if (position.dy > manager.canvasSize.height) {
       gameManager.sendGameEvent({"type": "miss"});

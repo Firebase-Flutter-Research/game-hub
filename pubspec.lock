@@ -149,7 +149,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: "637108ded21d9e4b96b576043b3763f429c1bda4"
+      resolved-ref: "59243a52597ff262e9bdd227e9eadab3a1fb8399"
       url: "https://github.com/Firebase-Flutter-Research/game-engine.git"
     source: git
     version: "1.0.0+1"

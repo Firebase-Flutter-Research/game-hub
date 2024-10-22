@@ -77,6 +77,7 @@ class PongWidget extends GameWidget {
             manager.canvasSize.height / 2 - Puck.radius)));
 
     gameManager.setOnGameEvent((event, gameState) {
+      if (!gameManager.hasRoom() || roomData.players.length != 2) return;
       final puck = manager.getInstancesWhereType<Puck>().firstOrNull;
       if (gameState["lastHitter"] == gameManager.player) return;
       switch (event.payload["type"]) {
@@ -91,7 +92,7 @@ class PongWidget extends GameWidget {
   }
 
   @override
-  void update(GameStateManager manager) {
+  void update(double deltaTime, GameStateManager manager) {
     manager.getInstancesWhereType<Puck>().firstOrNull?.roomData = roomData;
   }
 }
