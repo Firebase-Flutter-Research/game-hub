@@ -8,7 +8,7 @@ import 'package:flutter_fire_engine/model/player.dart';
 
 class Pong extends Game {
   @override
-  String get name => "Pong";
+  String get name => "Ping Pong";
 
   @override
   int get requiredPlayers => 2;
