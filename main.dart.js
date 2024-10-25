@@ -74809,7 +74809,7 @@ aeN(){return this.b},
 ad4(){this.b=!this.b},
 dX(){return A.i(["symbol",this.a,"flipped",this.b,"playerMatched",this.c],t.N,t.z)}}
 A.yu.prototype={
-gbX(){return"Pong"},
+gbX(){return"Ping Pong"},
 gia(){return 2},
 gfY(){return 2},
 jz(a,b,c){var s,r,q,p,o,n,m=t.Uo,l=A.x(m,t.S)
