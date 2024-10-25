@@ -5,6 +5,7 @@ import 'package:flutter_fire_engine/example/draw_my_thing.dart';
 import 'package:flutter_fire_engine/example/endangered.dart';
 import 'package:flutter_fire_engine/example/last_card.dart';
 import 'package:flutter_fire_engine/example/memory_match.dart';
+import 'package:flutter_fire_engine/example/pong.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_fire_engine/page/draw_my_thing.dart';
 import 'package:flutter_fire_engine/page/endangered.dart';
 import 'package:flutter_fire_engine/page/last_card.dart';
 import 'package:flutter_fire_engine/page/memory_match.dart';
+import 'package:flutter_fire_engine/page/pong.dart';
 import 'package:flutter_fire_engine/page/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
 
@@ -48,6 +50,8 @@ class _InGamePageState extends State<InGamePage> {
         return DrawMyThingWidget(roomData: roomData);
       case Endangered:
         return EndangeredPage(roomData: roomData);
+      case Pong:
+        return PongPage(roomData: roomData);
       default:
         return Container();
     }
