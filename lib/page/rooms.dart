@@ -62,8 +62,34 @@ class _RoomsPageState extends State<RoomsPage> {
               Expanded(
                   child: ElevatedButton(
                 onPressed: () async {
-                  if (await gameManager.createRoom()) {
-                    Navigator.of(context).pushNamed("/inGame");
+                  final password = await showDialog<String?>(
+                      context: context,
+                      useRootNavigator: false,
+                      builder: (context) {
+                        final controller = TextEditingController();
+                        return AlertDialog(
+                          title: const Text("Create Room"),
+                          content: TextField(
+                            controller: controller,
+                            decoration: const InputDecoration(
+                                hintText: "Add password?"),
+                          ),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text("Cancel")),
+                            TextButton(
+                                onPressed: () => Navigator.of(context)
+                                    .pop(controller.text.trim()),
+                                child: const Text("Create"))
+                          ],
+                        );
+                      });
+                  if (password != null) {
+                    if (await gameManager
+                        .createRoom(password.isNotEmpty ? password : null)) {
+                      Navigator.of(context).pushNamed("/inGame");
+                    }
                   }
                 },
                 child: const Text("Create Room"),
@@ -87,12 +113,65 @@ class _RoomsPageState extends State<RoomsPage> {
           Expanded(
               child: ElevatedButton(
                   onPressed: () async {
-                    if (await gameManager.joinRoom(doc)) {
+                    String? password;
+                    if (doc["password"] != null) {
+                      password = await showDialog<String?>(
+                          context: context,
+                          useRootNavigator: false,
+                          builder: (context) {
+                            final controller = TextEditingController();
+                            return AlertDialog(
+                              title: const Text("Join Room"),
+                              content: TextField(
+                                controller: controller,
+                                decoration: const InputDecoration(
+                                    hintText: "Enter password..."),
+                              ),
+                              actions: [
+                                TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: const Text("Cancel")),
+                                TextButton(
+                                    onPressed: () => Navigator.of(context)
+                                        .pop(controller.text.trim()),
+                                    child: const Text("Join"))
+                              ],
+                            );
+                          });
+                      if (password == null) {
+                        return;
+                      }
+                    }
+                    if (await gameManager.joinRoom(doc, password)) {
                       Navigator.of(context).pushNamed("/inGame");
+                    } else {
+                      ScaffoldMessenger.of(context)
+                        ..removeCurrentSnackBar()
+                        ..showSnackBar(const SnackBar(
+                            content: Text("Password is incorrect")));
                     }
                   },
-                  child: Text(
-                      "${doc.data()?["host"]["name"]}'s Room (${doc.data()?["playerCount"]}/${gameManager.game!.playerLimit})")))
+                  child: Stack(
+                    alignment: AlignmentDirectional.centerEnd,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Center(
+                              child: Text(
+                                  "${doc.data()?["host"]["name"]}'s Room (${doc.data()?["playerCount"]}/${gameManager.game!.playerLimit})"),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (doc["password"] != null)
+                        const Icon(
+                          Icons.lock,
+                          color: Colors.black87,
+                        )
+                    ],
+                  )))
         ],
       ),
     );
