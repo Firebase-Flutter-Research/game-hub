@@ -33,7 +33,7 @@ class GameManager {
   }
 
   // Get currently assigned room's game.
-  Game? get game => _firebaseRoomCommunicator?.game;
+  Game? get game => _firebaseRoomCommunicator?.room.game;
 
   // Check if a room has been assigned.
   bool hasRoom() {
