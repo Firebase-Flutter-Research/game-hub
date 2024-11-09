@@ -67,20 +67,23 @@ class _RoomsPageState extends State<RoomsPage> {
                       useRootNavigator: false,
                       builder: (context) {
                         final controller = TextEditingController();
+                        sendPassword() =>
+                            Navigator.of(context).pop(controller.text.trim());
                         return AlertDialog(
                           title: const Text("Create Room"),
                           content: TextField(
                             controller: controller,
+                            autofocus: true,
                             decoration: const InputDecoration(
                                 hintText: "Add password?"),
+                            onSubmitted: (_) => sendPassword(),
                           ),
                           actions: [
                             TextButton(
                                 onPressed: () => Navigator.of(context).pop(),
                                 child: const Text("Cancel")),
                             TextButton(
-                                onPressed: () => Navigator.of(context)
-                                    .pop(controller.text.trim()),
+                                onPressed: sendPassword,
                                 child: const Text("Create"))
                           ],
                         );
@@ -120,10 +123,14 @@ class _RoomsPageState extends State<RoomsPage> {
                           useRootNavigator: false,
                           builder: (context) {
                             final controller = TextEditingController();
+                            sendPassword() => Navigator.of(context)
+                                .pop(controller.text.trim());
                             return AlertDialog(
                               title: const Text("Join Room"),
                               content: TextField(
                                 controller: controller,
+                                autofocus: true,
+                                onSubmitted: (_) => sendPassword(),
                                 decoration: const InputDecoration(
                                     hintText: "Enter password..."),
                               ),
@@ -133,8 +140,7 @@ class _RoomsPageState extends State<RoomsPage> {
                                         Navigator.of(context).pop(),
                                     child: const Text("Cancel")),
                                 TextButton(
-                                    onPressed: () => Navigator.of(context)
-                                        .pop(controller.text.trim()),
+                                    onPressed: sendPassword,
                                     child: const Text("Join"))
                               ],
                             );
