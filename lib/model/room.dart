@@ -21,12 +21,12 @@ class TooManyPlayers extends CheckResultFailure {
   const TooManyPlayers() : super("There are too many players in the room");
 }
 
-class RoomData {
+class RoomData<T extends GameState> {
   final Game game;
   final List<Player> players;
   final Player host;
   final List<Event> events;
-  final Map<String, dynamic>? gameState;
+  final T? gameState;
 
   bool get gameStarted => gameState != null;
   bool get hasRequiredPlayers => players.length >= game.requiredPlayers;
@@ -39,8 +39,14 @@ class RoomData {
       required this.events,
       required this.gameState});
 
-  dynamic operator [](String key) {
-    return gameState?[key];
+  RoomData<U> cast<U extends GameState>() {
+    return RoomData<U>(
+      game: game,
+      players: players,
+      host: host,
+      events: events,
+      gameState: gameState as U?,
+    );
   }
 }
 
@@ -49,7 +55,7 @@ class Room {
   List<Player> players;
   Player host;
   List<Event> events;
-  Map<String, dynamic>? gameState;
+  GameState? gameState;
   late Random random;
 
   Room(
@@ -148,7 +154,7 @@ class Room {
         players: players.toList(),
         host: host,
         events: events.toList(),
-        gameState: gameStarted ? Map.from(gameState!) : null);
+        gameState: gameState);
   }
 
   Either<CheckResultFailure, dynamic> getGameResponse(

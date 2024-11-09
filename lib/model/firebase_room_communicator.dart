@@ -31,9 +31,9 @@ class FirebaseRoomCommunicator {
   void Function(Player)? _onPlayerJoin;
   void Function(Player)? _onPlayerLeave;
   void Function()? _onLeave;
-  void Function(GameEvent, Map<String, dynamic>)? _onGameEvent;
+  Function? _onGameEvent;
   void Function(CheckResultFailure)? _onGameEventFailure;
-  void Function(Map<String, dynamic>)? _onGameStart;
+  Function? _onGameStart;
   void Function(CheckResultFailure)? _onGameStartFailure;
   void Function(Map<String, dynamic>?)? _onGameStop;
   void Function(Player, Player)? _onHostReassigned;
@@ -363,7 +363,8 @@ class FirebaseRoomCommunicator {
     _onLeave = callback;
   }
 
-  void setOnGameEvent(void Function(GameEvent, Map<String, dynamic>) callback) {
+  void setOnGameEvent<T extends GameState>(
+      void Function(GameEvent, T) callback) {
     _onGameEvent = callback;
   }
 
@@ -371,7 +372,7 @@ class FirebaseRoomCommunicator {
     _onGameEventFailure = callback;
   }
 
-  void setOnGameStart(void Function(Map<String, dynamic>) callback) {
+  void setOnGameStart<T extends GameState>(void Function(T) callback) {
     _onGameStart = callback;
   }
 
