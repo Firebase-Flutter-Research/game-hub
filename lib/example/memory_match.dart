@@ -17,6 +17,17 @@ class CardAlreadyFlipped extends CheckResultFailure {
   const CardAlreadyFlipped() : super("Card is already flipped");
 }
 
+class MemoryMatchGameState extends GameState {
+  int currentPlayer;
+  List<MemoryCard> layout;
+  List<int> currentlyFlipped;
+
+  MemoryMatchGameState(
+      {required this.currentPlayer,
+      required this.layout,
+      required this.currentlyFlipped});
+}
+
 class MemoryMatch extends Game {
   // Game ID name
   @override
@@ -43,7 +54,7 @@ class MemoryMatch extends Game {
   // }
 
   @override
-  Map<String, dynamic> getInitialGameState(
+  GameState getInitialGameState(
       {required List<Player> players,
       required Player host,
       required Random random}) {
@@ -56,27 +67,28 @@ class MemoryMatch extends Game {
       ]);
     }
     cards.shuffle(random);
-    return {"currentPlayer": 0, "layout": cards, "currentlyFlipped": []};
+    return MemoryMatchGameState(
+        currentPlayer: 0, layout: cards, currentlyFlipped: []);
   }
 
   @override
   CheckResult checkPerformEvent(
       {required Map<String, dynamic> event,
       required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant MemoryMatchGameState gameState,
       required List<Player> players,
       required Player host}) {
-    if (players[gameState["currentPlayer"]] != player) {
+    if (players[gameState.currentPlayer] != player) {
       return const NotPlayerTurn();
     }
 
     if (event["position"] < -1 ||
-        event["position"] >= gameState["layout"].length) {
+        event["position"] >= gameState.layout.length) {
       return const NotSelectable();
     }
 
     if (event["position"] != -1) {
-      if (gameState["layout"][event["position"]].isFlipped()) {
+      if (gameState.layout[event["position"]].isFlipped()) {
         return const CardAlreadyFlipped();
       }
     }
@@ -86,60 +98,60 @@ class MemoryMatch extends Game {
   @override
   void processEvent(
       {required GameEvent event,
-      required Map<String, dynamic> gameState,
+      required covariant MemoryMatchGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
     int position = event.payload["position"];
 
-    gameState["currentlyFlipped"].add(position);
-    if (position >= 0 && position < gameState["layout"].length) {
-      gameState["layout"][position].flipCard();
+    gameState.currentlyFlipped.add(position);
+    if (position >= 0 && position < gameState.layout.length) {
+      gameState.layout[position].flipCard();
     }
-    if (gameState["currentlyFlipped"].length > 2) {
-      MemoryCard card1 = gameState["layout"][gameState["currentlyFlipped"][0]];
-      MemoryCard card2 = gameState["layout"][gameState["currentlyFlipped"][1]];
+    if (gameState.currentlyFlipped.length > 2) {
+      MemoryCard card1 = gameState.layout[gameState.currentlyFlipped[0]];
+      MemoryCard card2 = gameState.layout[gameState.currentlyFlipped[1]];
       if (card1.symbol == card2.symbol) {
         card1.playerMatched = event.author;
         card2.playerMatched = event.author;
       } else {
         card1.flipCard();
         card2.flipCard();
-        if (gameState["currentPlayer"] < players.length - 1) {
-          gameState["currentPlayer"] += 1;
+        if (gameState.currentPlayer < players.length - 1) {
+          gameState.currentPlayer += 1;
         } else {
-          gameState["currentPlayer"] = 0;
+          gameState.currentPlayer = 0;
         }
       }
-      gameState["currentlyFlipped"] = [];
+      gameState.currentlyFlipped = [];
     }
   }
 
   @override
   void onPlayerLeave(
       {required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant MemoryMatchGameState gameState,
       required List<Player> players,
       required List<Player> oldPlayers,
       required Player host,
       required Random random}) {
-    if (gameState["currentPlayer"] >= players.length) {
-      gameState["currentPlayer"] = 0;
+    if (gameState.currentPlayer >= players.length) {
+      gameState.currentPlayer = 0;
     }
     int leaveIndex = oldPlayers.indexOf(player);
-    if (leaveIndex < gameState["currentPlayer"]) {
-      gameState["currentPlayer"]--;
+    if (leaveIndex < gameState.currentPlayer) {
+      gameState.currentPlayer--;
     }
   }
 
   @override
   Map<String, dynamic>? checkGameEnd(
-      {required Map<String, dynamic> gameState,
+      {required covariant MemoryMatchGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
     Map<Player, int> scores = {};
-    for (MemoryCard card in gameState["layout"]) {
+    for (MemoryCard card in gameState.layout) {
       Player? matchedPlayer = card.playerMatched;
       if (matchedPlayer == null) {
         return null;

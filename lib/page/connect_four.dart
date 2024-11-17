@@ -1,28 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/connect_four.dart';
 import 'package:flutter_fire_engine/logic/utils.dart';
+import 'package:flutter_fire_engine/model/game_builder.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/model/room.dart';
+import 'package:flutter_fire_engine/page/lobby_widget.dart';
 
 class ConnectFourPage extends StatelessWidget {
-  final RoomData roomData;
-
-  const ConnectFourPage({super.key, required this.roomData});
+  const ConnectFourPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(
-          "It is ${roomData.gameState!["currentPlayer"] < roomData.players.length ? roomData.players[roomData.gameState!["currentPlayer"]].name : "No one"}'s turn"),
-      _boardWidget(roomData),
-    ]));
+    return GameBuilder<ConnectFourGameState>(
+        builder: (context, roomData, gameManager) =>
+            LobbyWidget(roomData: roomData, gameManager: gameManager),
+        gameStartedBuilder: (context, roomData, gameState, gameManager) {
+          return Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(
+                "It is ${roomData.gameState!.currentPlayer < roomData.players.length ? roomData.players[roomData.gameState!.currentPlayer].name : "No one"}'s turn"),
+            _boardWidget(gameState),
+          ]));
+        });
   }
 
-  Widget _boardWidget(RoomData roomData) {
+  Widget _boardWidget(ConnectFourGameState gameState) {
     final gameManager = GameManager.instance;
     double size = 40;
-    final board = List<int>.from(roomData.gameState!["board"]);
+    final board = List<int>.from(gameState.board);
     Widget buttons = Row(
         mainAxisSize: MainAxisSize.min,
         children: joinWidgets(

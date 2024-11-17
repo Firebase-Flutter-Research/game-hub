@@ -170,6 +170,13 @@ enum CheckersRequestType {
   getBoard,
 }
 
+class CheckersGameState extends GameState {
+  int currentPlayer;
+  List<String?> board;
+
+  CheckersGameState({required this.currentPlayer, required this.board});
+}
+
 class Checkers extends Game {
   static List<List<CheckersPiece?>> toBoard(List<String?> jsonBoard) {
     final board = <List<CheckersPiece?>>[];
@@ -203,7 +210,7 @@ class Checkers extends Game {
   int get playerLimit => 2;
 
   @override
-  Map<String, dynamic> getInitialGameState(
+  GameState getInitialGameState(
       {required List<Player> players,
       required Player host,
       required Random random}) {
@@ -215,17 +222,18 @@ class Checkers extends Game {
               if (i >= 5) return CheckersPiece.black;
               return null;
             }));
-    return {"currentPlayer": 0, "board": fromBoard(board)};
+    // return {"currentPlayer": 0, "board": fromBoard(board)};
+    return CheckersGameState(currentPlayer: 0, board: fromBoard(board));
   }
 
   @override
   CheckResult checkPerformEvent(
       {required Map<String, dynamic> event,
       required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant CheckersGameState gameState,
       required List<Player> players,
       required Player host}) {
-    if (players[gameState["currentPlayer"]] != player) {
+    if (players[gameState.currentPlayer] != player) {
       return const NotPlayerTurn();
     }
     return const CheckResultSuccess();
@@ -234,11 +242,11 @@ class Checkers extends Game {
   @override
   void processEvent(
       {required GameEvent event,
-      required Map<String, dynamic> gameState,
+      required covariant CheckersGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
-    final board = toBoard(gameState["board"]);
+    final board = toBoard(gameState.board);
     final route = CheckersRoute.fromJson(event.payload["route"]);
     if (!route.isPassive) {
       for (var i = 0; i < route.positions.length - 1; i++) {
@@ -253,35 +261,35 @@ class Checkers extends Game {
     board[route.start.key][route.start.value] = null;
     final kingRow = [0, 7];
     final kingTransformation = [CheckersPiece.blackKing, CheckersPiece.redKing];
-    if (route.end.key == kingRow[gameState["currentPlayer"]]) {
+    if (route.end.key == kingRow[gameState.currentPlayer]) {
       board[route.end.key][route.end.value] =
-          kingTransformation[gameState["currentPlayer"]];
+          kingTransformation[gameState.currentPlayer];
     }
-    gameState["board"] = fromBoard(board);
-    gameState["currentPlayer"] += 1;
-    gameState["currentPlayer"] %= players.length;
+    gameState.board = fromBoard(board);
+    gameState.currentPlayer += 1;
+    gameState.currentPlayer %= players.length;
   }
 
   @override
   void onPlayerLeave(
       {required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant CheckersGameState gameState,
       required List<Player> players,
       required List<Player> oldPlayers,
       required Player host,
       required Random random}) {
-    if (gameState["currentPlayer"] >= players.length) {
-      gameState["currentPlayer"] = 0;
+    if (gameState.currentPlayer >= players.length) {
+      gameState.currentPlayer = 0;
     }
   }
 
   @override
   Map<String, dynamic>? checkGameEnd(
-      {required Map<String, dynamic> gameState,
+      {required covariant CheckersGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
-    final board = toBoard(gameState["board"]);
+    final board = toBoard(gameState.board);
     final counts = {0: 0, 1: 0};
     for (var i = 0; i < board.length; i++) {
       for (var j = 0; j < board.first.length; j++) {
@@ -301,12 +309,12 @@ class Checkers extends Game {
   Either<CheckResultFailure, dynamic> getGameResponse(
       {required Map<String, dynamic> request,
       required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant CheckersGameState gameState,
       required List<Player> players,
       required Player host}) {
     switch (request["type"] as CheckersRequestType) {
       case CheckersRequestType.isCurrentPlayer:
-        if (players[gameState["currentPlayer"]] != player) {
+        if (players[gameState.currentPlayer] != player) {
           return const Left(CheckResultFailure("Not your turn."));
         }
         return const Right(null);
@@ -314,7 +322,7 @@ class Checkers extends Game {
         return Right(
             players.indexOf(player) == getIndexFromPiece(request["piece"]));
       case CheckersRequestType.getPossibleRoutes:
-        final board = toBoard(gameState["board"]);
+        final board = toBoard(gameState.board);
         final position = request["position"];
         final piece = board[position.key][position.value];
         if (piece == null) {
@@ -335,7 +343,7 @@ class Checkers extends Game {
             ? const Color.fromRGBO(103, 58, 183, 1)
             : const Color.fromRGBO(239, 80, 80, 1));
       case CheckersRequestType.getBoard:
-        return Right(toBoard(gameState["board"]));
+        return Right(toBoard(gameState.board));
     }
   }
 }

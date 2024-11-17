@@ -5,6 +5,14 @@ import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/player.dart';
 import 'package:pair/pair.dart';
 
+class ConnectFourGameState extends GameState {
+  int currentPlayer;
+  List<int> board;
+  int? lastPosition;
+
+  ConnectFourGameState({required this.currentPlayer, required this.board});
+}
+
 class ConnectFour extends Game {
   @override
   String get name => "Four in a Row";
@@ -19,21 +27,22 @@ class ConnectFour extends Game {
   static const int height = 6;
 
   @override
-  Map<String, dynamic> getInitialGameState(
+  GameState getInitialGameState(
       {required List<Player> players,
       required Player host,
       required Random random}) {
-    return {"currentPlayer": 0, "board": List.filled(width * height, -1)};
+    return ConnectFourGameState(
+        currentPlayer: 0, board: List.filled(width * height, -1));
   }
 
   @override
   CheckResult checkPerformEvent(
       {required Map<String, dynamic> event,
       required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant ConnectFourGameState gameState,
       required List<Player> players,
       required Player host}) {
-    if (players[gameState["currentPlayer"]] != player) {
+    if (players[gameState.currentPlayer] != player) {
       return const CheckResultFailure("Not your turn");
     }
     int position = event["position"];
@@ -43,7 +52,7 @@ class ConnectFour extends Game {
     for (int newPosition = position + width * (height - 1);
         newPosition >= 0;
         newPosition -= width) {
-      if (gameState["board"][newPosition] != -1) continue;
+      if (gameState.board[newPosition] != -1) continue;
       return const CheckResultSuccess();
     }
     return const CheckResultFailure("Column overflows");
@@ -52,7 +61,7 @@ class ConnectFour extends Game {
   @override
   void processEvent(
       {required GameEvent event,
-      required Map<String, dynamic> gameState,
+      required covariant ConnectFourGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
@@ -60,11 +69,11 @@ class ConnectFour extends Game {
     for (int newPosition = position + width * (height - 1);
         newPosition >= 0;
         newPosition -= width) {
-      if (gameState["board"][newPosition] != -1) continue;
-      gameState["board"][newPosition] = gameState["currentPlayer"];
-      gameState["lastPosition"] = newPosition;
-      gameState["currentPlayer"] += 1;
-      gameState["currentPlayer"] %= players.length;
+      if (gameState.board[newPosition] != -1) continue;
+      gameState.board[newPosition] = gameState.currentPlayer;
+      gameState.lastPosition = newPosition;
+      gameState.currentPlayer += 1;
+      gameState.currentPlayer %= players.length;
       return;
     }
   }
@@ -72,13 +81,13 @@ class ConnectFour extends Game {
   @override
   void onPlayerLeave(
       {required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant ConnectFourGameState gameState,
       required List<Player> players,
       required List<Player> oldPlayers,
       required Player host,
       required Random random}) {
-    if (gameState["currentPlayer"] >= players.length) {
-      gameState["currentPlayer"] = 0;
+    if (gameState.currentPlayer >= players.length) {
+      gameState.currentPlayer = 0;
     }
   }
 
@@ -100,9 +109,10 @@ class ConnectFour extends Game {
             posRow + dirRow, posCol + dirCol, dirRow, dirCol, board, icon);
   }
 
-  int getWinner(Map<String, dynamic> gameState) {
-    final board = List<int>.from(gameState["board"]);
-    int? position = gameState["lastPosition"];
+// TODO: does this need 'covariant' keyword?
+  int getWinner(ConnectFourGameState gameState) {
+    final board = List<int>.from(gameState.board);
+    int? position = gameState.lastPosition;
     if (position == null) return -1;
     final matrixPosition = getMatrixPosition(position);
     final directions = [
@@ -124,13 +134,13 @@ class ConnectFour extends Game {
     return -1;
   }
 
-  bool getDraw(Map<String, dynamic> gameState) {
-    return !gameState["board"].any((e) => e == -1);
+  bool getDraw(ConnectFourGameState gameState) {
+    return !gameState.board.any((e) => e == -1);
   }
 
   @override
   Map<String, dynamic>? checkGameEnd(
-      {required Map<String, dynamic> gameState,
+      {required covariant ConnectFourGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
