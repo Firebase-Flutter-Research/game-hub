@@ -66,8 +66,7 @@ class _HomeState extends State<Home> {
           Expanded(
               child: ElevatedButton(
                   onPressed: () async {
-                    gameManager.setGame(game);
-                    Navigator.of(context).pushNamed("/rooms");
+                    Navigator.of(context).pushNamed("/rooms", arguments: game);
                   },
                   child: Text(game.name)))
         ],

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/model/firebase_room_data.dart';
+import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/rooms_builder.dart';
 
@@ -16,7 +17,7 @@ class _RoomsPageState extends State<RoomsPage> {
   @override
   Widget build(BuildContext context) {
     final gameManager = GameManager.instance;
-
+    final game = ModalRoute.of(context)?.settings.arguments as Game;
     return Scaffold(
       appBar: AppBar(
         title: const Text("Select Room"),
@@ -35,7 +36,7 @@ class _RoomsPageState extends State<RoomsPage> {
               child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
                   child: RoomsBuilder(
-                    game: gameManager.game!,
+                    game: game,
                     builder: (context, roomDataList) {
                       return Column(
                         children: roomDataList
@@ -86,8 +87,8 @@ class _RoomsPageState extends State<RoomsPage> {
                         );
                       });
                   if (password != null) {
-                    if (await gameManager
-                        .createRoom(password.isNotEmpty ? password : null)) {
+                    if (await gameManager.createRoom(
+                        game, password.isNotEmpty ? password : null)) {
                       Navigator.of(context).pushNamed("/inGame");
                     }
                   }
@@ -144,8 +145,7 @@ class _RoomsPageState extends State<RoomsPage> {
                         return;
                       }
                     }
-                    if (await gameManager.joinRoom(
-                        roomData.document, password)) {
+                    if (await gameManager.joinRoom(roomData, password)) {
                       Navigator.of(context).pushNamed("/inGame");
                     } else {
                       ScaffoldMessenger.of(context)
