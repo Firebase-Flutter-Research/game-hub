@@ -143,9 +143,8 @@ class FirebaseRoomCommunicator {
       if (room.players.isNotEmpty) {
         if (room.host == player) {
           final newHost = room.players.first;
-          await _sendEvent(
-              EventType.hostReassigned, {"player": newHost.toJson()});
-          await roomReference.update({"host": newHost.toJson()});
+          _sendEvent(EventType.hostReassigned, {"player": newHost.toJson()});
+          roomReference.update({"host": newHost.toJson()});
         }
       } else {
         _deleteRoom(roomReference);

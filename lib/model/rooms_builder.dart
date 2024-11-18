@@ -21,7 +21,7 @@ class RoomsBuilder extends StatelessWidget {
     return StreamBuilder(
         stream: FirebaseRoomCommunicator.getRooms(game),
         builder: (context, snapshot) {
-          const placeholder = Placeholder();
+          const placeholder = SizedBox.shrink();
           if (snapshot.hasError) {
             if (errorBuilder != null) {
               return errorBuilder!(

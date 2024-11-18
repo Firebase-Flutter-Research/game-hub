@@ -52,7 +52,6 @@ class _RoomsPageState extends State<RoomsPage> {
                             .toList(),
                       );
                     },
-                    loadingBuilder: (context) => Container(),
                   ))),
           Row(
             mainAxisSize: MainAxisSize.max,
