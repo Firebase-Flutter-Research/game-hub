@@ -25,6 +25,7 @@ class GameBuilder<T extends GameState> extends StatelessWidget {
     return StreamBuilder(
         stream: gameManager.roomDataStream,
         builder: (context, snapshot) {
+          if (!gameManager.hasRoom()) return Container();
           const placeholder = Placeholder();
           if (snapshot.hasError) {
             if (errorBuilder != null) {

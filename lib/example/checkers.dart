@@ -222,7 +222,6 @@ class Checkers extends Game {
               if (i >= 5) return CheckersPiece.black;
               return null;
             }));
-    // return {"currentPlayer": 0, "board": fromBoard(board)};
     return CheckersGameState(currentPlayer: 0, board: fromBoard(board));
   }
 

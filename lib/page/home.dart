@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/checkers.dart';
 import 'package:flutter_fire_engine/example/connect_four.dart';
-// import 'package:flutter_fire_engine/example/draw_my_thing.dart';
-// import 'package:flutter_fire_engine/example/endangered.dart';
+import 'package:flutter_fire_engine/example/draw_my_thing.dart';
+import 'package:flutter_fire_engine/example/endangered.dart';
 import 'package:flutter_fire_engine/example/last_card.dart';
 import 'package:flutter_fire_engine/example/memory_match.dart';
-// import 'package:flutter_fire_engine/example/pong.dart';
+import 'package:flutter_fire_engine/example/pong.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/game.dart';
@@ -27,9 +27,9 @@ class _HomeState extends State<Home> {
     RockPaperScissors(),
     LastCard(),
     MemoryMatch(),
-    // DrawMyThing(),
-    // Endangered(),
-    // Pong(),
+    DrawMyThing(),
+    Endangered(),
+    Pong(),
   ];
 
   late GameManager gameManager;

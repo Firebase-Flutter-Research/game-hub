@@ -1,15 +1,15 @@
 import "package:flutter/material.dart";
+import "package:flutter_fire_engine/example/endangered.dart";
 import "package:flutter_fire_engine/logic/utils.dart";
+import "package:flutter_fire_engine/model/game_builder.dart";
 import "package:flutter_fire_engine/model/game_manager.dart";
 import "package:flutter_fire_engine/model/player.dart";
-import "package:flutter_fire_engine/model/room.dart";
 import "package:collection/collection.dart";
+import "package:flutter_fire_engine/page/lobby_widget.dart";
 import "package:pair/pair.dart";
 
 class EndangeredPage extends StatefulWidget {
-  final RoomData roomData;
-
-  const EndangeredPage({super.key, required this.roomData});
+  const EndangeredPage({super.key});
 
   @override
   State<EndangeredPage> createState() => _EndangeredPageState();
@@ -29,9 +29,8 @@ class _EndangeredPageState extends State<EndangeredPage> {
   void initState() {
     super.initState();
     gameManager = GameManager.instance;
-    gameManager.setOnGameEvent((event, gameState) {
-      if (event["type"] == "answerQuestion" &&
-          gameState["state"] == "selecting") {
+    gameManager.setOnGameEvent<EndangeredGameState>((event, gameState) {
+      if (event["type"] == "answerQuestion" && gameState.state == "selecting") {
         final question =
             gameManager.getGameResponse({"type": "getCurrentQuestion"}).right
                 as Map<String, dynamic>;
@@ -54,15 +53,21 @@ class _EndangeredPageState extends State<EndangeredPage> {
 
   @override
   Widget build(BuildContext context) {
-    switch (widget.roomData["state"]) {
-      case "selecting":
-        return _selectingStateWidget();
-      case "buzzing":
-        return _buzzingStateWidget();
-      case "answering":
-        return _answeringStateWidget();
-    }
-    return Container();
+    return GameBuilder<EndangeredGameState>(
+      builder: (context, roomData, gameManager) =>
+          LobbyWidget(roomData: roomData, gameManager: gameManager),
+      gameStartedBuilder: (context, roomData, gameState, gameManager) {
+        switch (roomData.gameState!.state) {
+          case "selecting":
+            return _selectingStateWidget(roomData.gameState!);
+          case "buzzing":
+            return _buzzingStateWidget();
+          case "answering":
+            return _answeringStateWidget(roomData.gameState!);
+        }
+        return Container();
+      },
+    );
   }
 
   Widget _scoresWidget(Map<Player, int> scores) {
@@ -70,24 +75,24 @@ class _EndangeredPageState extends State<EndangeredPage> {
         "Scores — ${scores.entries.map((entry) => "${entry.key.name}: ${entry.value}").join(", ")}");
   }
 
-  Widget _selectingStateWidget() {
+  Widget _selectingStateWidget(EndangeredGameState gameState) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _scoresWidget(widget.roomData["scores"] as Map<Player, int>),
+          _scoresWidget(gameState.scores),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
-                "It is ${widget.roomData["currentSelector"].name}'s turn to select"),
+                "It is ${gameState.currentSelector.name}'s turn to select"),
           ),
-          _questionsTable(),
+          _questionsTable(gameState),
         ],
       ),
     );
   }
 
-  Widget _questionsTable() {
+  Widget _questionsTable(EndangeredGameState gameState) {
     final questions =
         gameManager.getGameResponse({"type": "getQuestions"}).right
             as Map<String, Map<String, Map<String, dynamic>>>;
@@ -104,8 +109,7 @@ class _EndangeredPageState extends State<EndangeredPage> {
                       children: <Widget>[Text(q.key), const Divider()] +
                           difficulties.map((d) {
                             final answeredQuestions =
-                                widget.roomData["answeredQuestions"]
-                                    as Set<Pair<String, String>>;
+                                gameState.answeredQuestions;
                             return TextButton(
                                 onPressed: () {
                                   gameManager.sendGameEvent({
@@ -161,13 +165,13 @@ class _EndangeredPageState extends State<EndangeredPage> {
     );
   }
 
-  Widget _answeringStateWidget() {
+  Widget _answeringStateWidget(EndangeredGameState gameState) {
     final currentQuestion =
         gameManager.getGameResponse({"type": "getCurrentQuestion"}).right
             as Map<String, dynamic>;
-    final buzzedIn = widget.roomData["buzzedIn"] as List<Player>;
-    final currentAnswerer = buzzedIn[widget.roomData["currentAnswerer"]];
-    final currentAnswers = widget.roomData["currentAnswers"] as Set<int>;
+    final buzzedIn = gameState.buzzedIn!;
+    final currentAnswerer = buzzedIn[gameState.currentAnswerer!];
+    final currentAnswers = gameState.currentAnswers!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,

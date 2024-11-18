@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/example/pong.dart';
 import 'package:flutter_fire_engine/game_engine/pong_objects.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/player.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_fire_engine/model/room.dart';
 import 'package:game_engine/game_engine.dart';
 
 class PongWidget extends GameWidget {
-  final RoomData roomData;
+  final RoomData<PongGameState> roomData;
 
   const PongWidget({super.key, required super.size, required this.roomData});
 
@@ -22,8 +23,7 @@ class PongWidget extends GameWidget {
       fontSize: 4,
     );
     final textSpanUp = TextSpan(
-        text: roomData.gameState!["scores"][other].toString(),
-        style: textStyle);
+        text: roomData.gameState!.scores[other].toString(), style: textStyle);
     final textPainterUp = TextPainter(
       text: textSpanUp,
       textDirection: TextDirection.ltr,
@@ -34,7 +34,7 @@ class PongWidget extends GameWidget {
         Offset(manager.canvasSize.width / 2 - textPainterUp.width / 2,
             manager.canvasSize.height / 4 - textPainterUp.height));
     final textSpanDown = TextSpan(
-        text: roomData.gameState!["scores"][gameManager.player].toString(),
+        text: roomData.gameState!.scores[gameManager.player].toString(),
         style: textStyle);
     final textPainterDown = TextPainter(
       text: textSpanDown,
@@ -76,10 +76,10 @@ class PongWidget extends GameWidget {
         position: Offset(manager.canvasSize.width / 2 - Puck.radius,
             manager.canvasSize.height / 2 - Puck.radius)));
 
-    gameManager.setOnGameEvent((event, gameState) {
+    gameManager.setOnGameEvent<PongGameState>((event, gameState) {
       if (!gameManager.hasRoom() || roomData.players.length != 2) return;
       final puck = manager.getInstancesWhereType<Puck>().firstOrNull;
-      if (gameState["lastHitter"] == gameManager.player) return;
+      if (gameState.lastHitter == gameManager.player) return;
       switch (event.payload["type"]) {
         case "hit":
           puck?.onHit(manager);

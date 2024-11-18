@@ -109,7 +109,6 @@ class ConnectFour extends Game {
             posRow + dirRow, posCol + dirCol, dirRow, dirCol, board, icon);
   }
 
-// TODO: does this need 'covariant' keyword?
   int getWinner(ConnectFourGameState gameState) {
     final board = List<int>.from(gameState.board);
     int? position = gameState.lastPosition;

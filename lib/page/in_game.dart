@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/checkers.dart';
 import 'package:flutter_fire_engine/example/connect_four.dart';
-// import 'package:flutter_fire_engine/example/draw_my_thing.dart';
-// import 'package:flutter_fire_engine/example/endangered.dart';
+import 'package:flutter_fire_engine/example/draw_my_thing.dart';
+import 'package:flutter_fire_engine/example/endangered.dart';
 import 'package:flutter_fire_engine/example/last_card.dart';
 import 'package:flutter_fire_engine/example/memory_match.dart';
-// import 'package:flutter_fire_engine/example/pong.dart';
+import 'package:flutter_fire_engine/example/pong.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/model/game.dart';
@@ -13,11 +13,11 @@ import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/page/chat_room.dart';
 import 'package:flutter_fire_engine/page/checkers.dart';
 import 'package:flutter_fire_engine/page/connect_four.dart';
-// import 'package:flutter_fire_engine/page/draw_my_thing.dart';
-// import 'package:flutter_fire_engine/page/endangered.dart';
+import 'package:flutter_fire_engine/page/draw_my_thing.dart';
+import 'package:flutter_fire_engine/page/endangered.dart';
 import 'package:flutter_fire_engine/page/last_card.dart';
 import 'package:flutter_fire_engine/page/memory_match.dart';
-// import 'package:flutter_fire_engine/page/pong.dart';
+import 'package:flutter_fire_engine/page/pong.dart';
 import 'package:flutter_fire_engine/page/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
 
@@ -46,12 +46,12 @@ class _InGamePageState extends State<InGamePage> {
         return LastCardPage();
       case MemoryMatch:
         return MemoryMatchPage();
-      // case DrawMyThing:
-      //   return DrawMyThingWidget(roomData: roomData);
-      // case Endangered:
-      //   return EndangeredPage(roomData: roomData);
-      // case Pong:
-      //   return PongPage(roomData: roomData);
+      case DrawMyThing:
+        return DrawMyThingWidget();
+      case Endangered:
+        return EndangeredPage();
+      case Pong:
+        return PongPage();
       default:
         return Container();
     }

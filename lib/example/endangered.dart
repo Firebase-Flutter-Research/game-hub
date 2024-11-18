@@ -9,18 +9,6 @@ import 'package:flutter_fire_engine/model/player.dart';
 import 'package:pair/pair.dart';
 
 class EndangeredGameState extends GameState {
-  // return {
-  // "categories": categories,
-  // "scores": {for (var player in players) player: 0},
-  // "answeredQuestions": <Pair<String, String>>{},
-  // "state": "selecting", // {"selecting", "buzzing", "answering"}
-  // "buzzedIn": null, // Ordered list of players
-  // "notBuzzedIn": null, // Set of players that did not buzz in time
-  // "currentQuestion": null, // Pair<Category, Difficulty>
-  // "currentSelector": host,
-  // "currentAnswerer": null, // Index of buzzedIn
-  // "currentAnswers": null, // Set of indexes
-  // };
   Set<String> categories;
   Map<Player, int> scores;
   Set<Pair<String, String>> answeredQuestions;

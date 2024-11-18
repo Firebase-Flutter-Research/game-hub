@@ -3,15 +3,14 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/draw_my_thing.dart';
+import 'package:flutter_fire_engine/model/game_builder.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/player.dart';
 import 'package:flutter_fire_engine/model/room.dart';
-import 'package:pair/pair.dart';
+import 'package:flutter_fire_engine/page/lobby_widget.dart';
 
 class DrawMyThingWidget extends StatefulWidget {
-  final RoomData roomData;
-
-  const DrawMyThingWidget({super.key, required this.roomData});
+  const DrawMyThingWidget({super.key});
 
   @override
   State<DrawMyThingWidget> createState() => _DrawMyThingWidgetState();
@@ -28,12 +27,13 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
   final textController = TextEditingController();
   final scrollController = ScrollController();
   Timer? timer;
+  RoomData<DrawMyThingGameState>? roomData;
 
   @override
   void initState() {
     super.initState();
     gameManager = GameManager.instance;
-    gameManager.setOnGameEvent((event, gameState) {
+    gameManager.setOnGameEvent<DrawMyThingGameState>((event, gameState) {
       switch (event.payload["type"]) {
         case "guess":
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -46,8 +46,9 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
           timer = Timer.periodic(const Duration(seconds: 1), (timer) {
             if (gameManager.game.runtimeType != DrawMyThing ||
                 !gameManager.hasRoom() ||
-                !widget.roomData.gameStarted ||
-                widget.roomData.gameState!["selectingWord"]) {
+                roomData == null ||
+                !roomData!.gameStarted ||
+                roomData!.gameState!.selectingWord) {
               timer.cancel();
               return;
             }
@@ -76,10 +77,17 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (gameManager.getGameResponse({"type": "isCurrentPlayer"}).right) {
-      return _drawWidget();
-    }
-    return _guessWidget();
+    return GameBuilder<DrawMyThingGameState>(
+      builder: (context, roomData, gameManager) =>
+          LobbyWidget(roomData: roomData, gameManager: gameManager),
+      gameStartedBuilder: (context, roomData, gameState, gameManager) {
+        this.roomData = roomData;
+        if (gameManager.getGameResponse({"type": "isCurrentPlayer"}).right) {
+          return _drawWidget(roomData.gameState!);
+        }
+        return _guessWidget(roomData.gameState!);
+      },
+    );
   }
 
   Widget _drawingImageWidget(List<List<Offset>> drawing) {
@@ -95,26 +103,25 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
         "Scores — ${scores.entries.map((entry) => "${entry.key.name}: ${entry.value}").join(", ")}");
   }
 
-  Widget _drawWidget() {
+  Widget _drawWidget(DrawMyThingGameState gameState) {
     final rescaledSize =
         min(MediaQuery.of(context).size.width * 3 / 4, size * 3 / 4);
-    if (widget.roomData.gameState!["selectingWord"]) {
+    if (gameState.selectingWord) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-                _scoresWidget(
-                    widget.roomData.gameState!["scores"] as Map<Player, int>),
+                _scoresWidget(gameState.scores),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                      "Round ${widget.roomData.gameState!["roundCount"] + 1}/${gameManager.getGameResponse({
+                      "Round ${gameState.roundCount + 1}/${gameManager.getGameResponse({
                         "type": "totalRoundCount"
                       }).right}"),
                 ),
                 const Text("Select a word:")
               ] +
-              List<String>.from(widget.roomData.gameState!["wordOptions"])
+              gameState.wordOptions
                   .map((e) => TextButton(
                       onPressed: () {
                         gameManager
@@ -131,7 +138,7 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              "Round ${widget.roomData.gameState!["roundCount"] + 1}/${gameManager.getGameResponse({
+              "Round ${gameState.roundCount + 1}/${gameManager.getGameResponse({
                     "type": "totalRoundCount"
                   }).right}",
               style: const TextStyle(fontSize: 20),
@@ -141,7 +148,7 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
               style: const TextStyle(fontSize: 20),
             ),
             Text(
-              "Word: ${widget.roomData.gameState!["currentWord"]}",
+              "Word: ${gameState.currentWord}",
               style: const TextStyle(fontSize: 20),
             ),
             Padding(
@@ -235,9 +242,7 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
                       padding: const EdgeInsets.all(4.0),
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: (widget
-                                      .roomData.gameState!["currentGuesses"]
-                                  as List<Pair<Player, String>>)
+                          children: gameState.currentGuesses
                               .expand((guess) => [
                                     Text("${guess.key.name}: ${guess.value}"),
                                     const Divider()
@@ -252,20 +257,19 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
     );
   }
 
-  Widget _guessWidget() {
+  Widget _guessWidget(DrawMyThingGameState gameState) {
     final rescaledSize =
         min(MediaQuery.of(context).size.width * 2 / 3, size * 2 / 3);
-    if (widget.roomData.gameState!["selectingWord"]) {
+    if (gameState.selectingWord) {
       return Center(
           child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _scoresWidget(
-              widget.roomData.gameState!["scores"] as Map<Player, int>),
+          _scoresWidget(gameState.scores),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
-                "Round ${widget.roomData.gameState!["roundCount"] + 1}/${gameManager.getGameResponse({
+                "Round ${gameState.roundCount + 1}/${gameManager.getGameResponse({
                   "type": "totalRoundCount"
                 }).right}"),
           ),
@@ -281,7 +285,7 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              "Round ${widget.roomData.gameState!["roundCount"] + 1}/${gameManager.getGameResponse({
+              "Round ${gameState.roundCount + 1}/${gameManager.getGameResponse({
                     "type": "totalRoundCount"
                   }).right}",
               style: const TextStyle(fontSize: 20),
@@ -299,13 +303,12 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
                   border: Border.all(color: Colors.black),
                 ),
                 child: FittedBox(
-                  child: _drawingImageWidget(
-                      widget.roomData.gameState!["currentDrawing"]),
+                  child: _drawingImageWidget(gameState.currentDrawing),
                 ),
               ),
             ),
             Text(
-              "Word: ${(widget.roomData.gameState!["currentWord"] as String).characters.map((c) => isAlphanumeric(c) ? "_" : c).join(" ")}",
+              "Word: ${gameState.currentWord.characters.map((c) => isAlphanumeric(c) ? "_" : c).join(" ")}",
               style: const TextStyle(fontSize: 20),
             ),
             Padding(
@@ -326,15 +329,13 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
                           padding: const EdgeInsets.all(4.0),
                           child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children:
-                                  (widget.roomData.gameState!["currentGuesses"]
-                                          as List<Pair<Player, String>>)
-                                      .expand((guess) => [
-                                            Text(
-                                                "${guess.key.name}: ${guess.value}"),
-                                            const Divider()
-                                          ])
-                                      .toList()),
+                              children: gameState.currentGuesses
+                                  .expand((guess) => [
+                                        Text(
+                                            "${guess.key.name}: ${guess.value}"),
+                                        const Divider()
+                                      ])
+                                  .toList()),
                         ),
                       )),
                       const Divider(),

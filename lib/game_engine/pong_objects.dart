@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/example/pong.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/player.dart';
 import 'package:flutter_fire_engine/model/room.dart';
@@ -119,7 +120,7 @@ class Puck extends GameObject {
   static const radius = 2.0;
 
   Offset direction;
-  RoomData roomData;
+  RoomData<PongGameState> roomData;
 
   bool waiting = false;
 
@@ -145,8 +146,8 @@ class Puck extends GameObject {
 
   void onHit(GameStateManager manager) {
     final other = gameManager.getGameResponse({}).right as Player;
-    final contactPosition = roomData.gameState!["positions"][other] as Offset;
-    final contactDirection = roomData.gameState!["directions"][other] as Offset;
+    final contactPosition = roomData.gameState!.positions[other]!;
+    final contactDirection = roomData.gameState!.directions[other]!;
     position = Offset(manager.canvasSize.width, manager.canvasSize.height) -
         contactPosition -
         const Offset(radius, radius);

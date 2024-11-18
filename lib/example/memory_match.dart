@@ -43,12 +43,6 @@ class MemoryMatch extends Game {
 
   static const int numberOfPairs = 15;
 
-  // gameState = {
-  // "currentPlayer": index of who's ever turn it is,
-  // "layout": [all cards in order they are placed],
-  // "currentlyFlipped: [indexes of cards flipped during current player's turn]
-  // }
-
   // event = {
   //   "position": index of card to flip
   // }
