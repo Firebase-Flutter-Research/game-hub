@@ -11,14 +11,14 @@ class ConnectFourPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameBuilder<ConnectFourGameState>(
-        builder: (context, roomData, gameManager) =>
+        notStartedBuilder: (context, roomData, gameManager) =>
             LobbyWidget(roomData: roomData, gameManager: gameManager),
-        gameStartedBuilder: (context, roomData, gameState, gameManager) {
+        gameStartedBuilder: (context, roomData, gameManager) {
           return Center(
               child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text(
-                "It is ${roomData.gameState!.currentPlayer < roomData.players.length ? roomData.players[roomData.gameState!.currentPlayer].name : "No one"}'s turn"),
-            _boardWidget(gameState),
+                "It is ${roomData.gameState.currentPlayer < roomData.players.length ? roomData.players[roomData.gameState.currentPlayer].name : "No one"}'s turn"),
+            _boardWidget(roomData.gameState),
           ]));
         });
   }

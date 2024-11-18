@@ -54,16 +54,16 @@ class _EndangeredPageState extends State<EndangeredPage> {
   @override
   Widget build(BuildContext context) {
     return GameBuilder<EndangeredGameState>(
-      builder: (context, roomData, gameManager) =>
+      notStartedBuilder: (context, roomData, gameManager) =>
           LobbyWidget(roomData: roomData, gameManager: gameManager),
-      gameStartedBuilder: (context, roomData, gameState, gameManager) {
-        switch (roomData.gameState!.state) {
+      gameStartedBuilder: (context, roomData, gameManager) {
+        switch (roomData.gameState.state) {
           case "selecting":
-            return _selectingStateWidget(roomData.gameState!);
+            return _selectingStateWidget(roomData.gameState);
           case "buzzing":
             return _buzzingStateWidget();
           case "answering":
-            return _answeringStateWidget(roomData.gameState!);
+            return _answeringStateWidget(roomData.gameState);
         }
         return Container();
       },

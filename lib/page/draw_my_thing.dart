@@ -27,7 +27,7 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
   final textController = TextEditingController();
   final scrollController = ScrollController();
   Timer? timer;
-  RoomData<DrawMyThingGameState>? roomData;
+  RoomDataGameState<DrawMyThingGameState>? roomData;
 
   @override
   void initState() {
@@ -48,7 +48,7 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
                 !gameManager.hasRoom() ||
                 roomData == null ||
                 !roomData!.gameStarted ||
-                roomData!.gameState!.selectingWord) {
+                roomData!.gameState.selectingWord) {
               timer.cancel();
               return;
             }
@@ -78,14 +78,14 @@ class _DrawMyThingWidgetState extends State<DrawMyThingWidget> {
   @override
   Widget build(BuildContext context) {
     return GameBuilder<DrawMyThingGameState>(
-      builder: (context, roomData, gameManager) =>
+      notStartedBuilder: (context, roomData, gameManager) =>
           LobbyWidget(roomData: roomData, gameManager: gameManager),
-      gameStartedBuilder: (context, roomData, gameState, gameManager) {
+      gameStartedBuilder: (context, roomData, gameManager) {
         this.roomData = roomData;
         if (gameManager.getGameResponse({"type": "isCurrentPlayer"}).right) {
-          return _drawWidget(roomData.gameState!);
+          return _drawWidget(roomData.gameState);
         }
-        return _guessWidget(roomData.gameState!);
+        return _guessWidget(roomData.gameState);
       },
     );
   }

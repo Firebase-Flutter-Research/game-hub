@@ -39,15 +39,15 @@ class _CheckersPageState extends State<CheckersPage> {
   @override
   Widget build(BuildContext context) {
     return GameBuilder<CheckersGameState>(
-        builder: (context, roomData, gameManager) =>
+        notStartedBuilder: (context, roomData, gameManager) =>
             LobbyWidget(roomData: roomData, gameManager: gameManager),
-        gameStartedBuilder: (context, roomData, gameState, gameManager) {
+        gameStartedBuilder: (context, roomData, gameManager) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                    "It is ${gameState.currentPlayer < roomData.players.length ? roomData.players[gameState.currentPlayer].name : "No one"}'s turn"),
+                    "It is ${roomData.gameState.currentPlayer < roomData.players.length ? roomData.players[roomData.gameState.currentPlayer].name : "No one"}'s turn"),
                 _checkerboardWidget(context),
               ],
             ),

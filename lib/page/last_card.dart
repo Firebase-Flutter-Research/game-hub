@@ -11,9 +11,9 @@ class LastCardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameBuilder<LastCardGameState>(
-      builder: (context, roomData, gameManager) =>
+      notStartedBuilder: (context, roomData, gameManager) =>
           LobbyWidget(roomData: roomData, gameManager: gameManager),
-      gameStartedBuilder: (context, roomData, gameState, gameManager) {
+      gameStartedBuilder: (context, roomData, gameManager) {
         return Column(
           children: [
             const SizedBox(height: 100),
@@ -27,22 +27,23 @@ class LastCardPage extends StatelessWidget {
                               Text(p.name,
                                   style: TextStyle(
                                       fontWeight: p ==
-                                              roomData.players[
-                                                  gameState.currentPlayer]
+                                              roomData.players[roomData
+                                                  .gameState.currentPlayer]
                                           ? FontWeight.bold
                                           : FontWeight.normal,
                                       fontSize: p ==
-                                              roomData.players[
-                                                  gameState.currentPlayer]
+                                              roomData.players[roomData
+                                                  .gameState.currentPlayer]
                                           ? 18
                                           : 16)),
-                              Text("x${gameState.playerCards[p]!.length}"),
+                              Text(
+                                  "x${roomData.gameState.playerCards[p]!.length}"),
                             ],
                           ))
                       .toList(),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(gameState.direction > 0 ? "⟶" : "⟵",
+                    child: Text(roomData.gameState.direction > 0 ? "⟶" : "⟵",
                         style: const TextStyle(fontSize: 16)),
                   )),
             ),
@@ -51,7 +52,7 @@ class LastCardPage extends StatelessWidget {
                     child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _cardWidget(gameState.playedCards.last),
+                _cardWidget(roomData.gameState.playedCards.last),
                 GestureDetector(
                     onTap: () async {
                       await gameManager.sendGameEvent({"isDraw": true});
@@ -62,11 +63,11 @@ class LastCardPage extends StatelessWidget {
             Text("You (${gameManager.player.name})",
                 style: TextStyle(
                     fontWeight: gameManager.player ==
-                            roomData.players[gameState.currentPlayer]
+                            roomData.players[roomData.gameState.currentPlayer]
                         ? FontWeight.bold
                         : FontWeight.normal,
                     fontSize: gameManager.player ==
-                            roomData.players[gameState.currentPlayer]
+                            roomData.players[roomData.gameState.currentPlayer]
                         ? 18
                         : 16)),
             Padding(
@@ -74,7 +75,7 @@ class LastCardPage extends StatelessWidget {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: gameState.playerCards[gameManager.player]!
+                  children: roomData.gameState.playerCards[gameManager.player]!
                       .map((LastCardCard card) => _cardWidget(card, () async {
                             String? color;
                             if (LastCardType.fromValue(card.value).isWild) {
@@ -113,10 +114,6 @@ class LastCardPage extends StatelessWidget {
         );
       },
     );
-
-    // final gameManager = GameManager.instance;
-    // final currentPlayer =
-    //     roomData.players[roomData.gameState!["currentPlayer"]];
   }
 }
 

@@ -10,13 +10,12 @@ class PongPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameBuilder<PongGameState>(
-      builder: (context, roomData, gameManager) =>
+      notStartedBuilder: (context, roomData, gameManager) =>
           LobbyWidget(roomData: roomData, gameManager: gameManager),
-      gameStartedBuilder: (context, roomData, gameState, gameManager) =>
-          SizedBox(
-              width: double.infinity,
-              height: double.infinity,
-              child: PongWidget(size: const Size(75, 100), roomData: roomData)),
+      gameStartedBuilder: (context, roomData, gameManager) => SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: PongWidget(size: const Size(75, 100), roomData: roomData)),
     );
   }
 }

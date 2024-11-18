@@ -120,7 +120,7 @@ class Puck extends GameObject {
   static const radius = 2.0;
 
   Offset direction;
-  RoomData<PongGameState> roomData;
+  RoomDataGameState<PongGameState> roomData;
 
   bool waiting = false;
 
@@ -146,8 +146,8 @@ class Puck extends GameObject {
 
   void onHit(GameStateManager manager) {
     final other = gameManager.getGameResponse({}).right as Player;
-    final contactPosition = roomData.gameState!.positions[other]!;
-    final contactDirection = roomData.gameState!.directions[other]!;
+    final contactPosition = roomData.gameState.positions[other]!;
+    final contactDirection = roomData.gameState.directions[other]!;
     position = Offset(manager.canvasSize.width, manager.canvasSize.height) -
         contactPosition -
         const Offset(radius, radius);

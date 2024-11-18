@@ -13,27 +13,17 @@ class MemoryMatchPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final gameManager = GameManager.instance;
-    // return Center(
-    //     child: Column(
-    //   mainAxisSize: MainAxisSize.min,
-    //   children: [
-    //     Text(
-    //         "It is ${roomData.gameState!["currentPlayer"] < roomData.players.length ? roomData.players[roomData.gameState!["currentPlayer"]].name : "No one"}'s turn"),
-    //     _tableWidget(context, roomData, gameManager),
-    //   ],
-    // ));
     return GameBuilder<MemoryMatchGameState>(
-      builder: (context, roomData, gameManager) =>
+      notStartedBuilder: (context, roomData, gameManager) =>
           LobbyWidget(roomData: roomData, gameManager: gameManager),
-      gameStartedBuilder: (context, roomData, gameState, gameManager) {
+      gameStartedBuilder: (context, roomData, gameManager) {
         return Center(
             child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-                "It is ${gameState.currentPlayer < roomData.players.length ? roomData.players[gameState.currentPlayer].name : "No one"}'s turn"),
-            _tableWidget(context, gameState, gameManager),
+                "It is ${roomData.gameState.currentPlayer < roomData.players.length ? roomData.players[roomData.gameState.currentPlayer].name : "No one"}'s turn"),
+            _tableWidget(context, roomData.gameState, gameManager),
           ],
         ));
       },

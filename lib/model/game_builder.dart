@@ -5,17 +5,17 @@ import 'package:flutter_fire_engine/model/room.dart';
 
 class GameBuilder<T extends GameState> extends StatelessWidget {
   final GameManager? gameManager;
-  final Widget Function(BuildContext, RoomData<T>, GameManager) builder;
-  final Widget Function(BuildContext, RoomData<T>, T, GameManager)?
+  final Widget Function(BuildContext, RoomDataGameState<T>, GameManager)
       gameStartedBuilder;
+  final Widget Function(BuildContext, RoomData, GameManager) notStartedBuilder;
   final Widget Function(BuildContext)? loadingBuilder;
   final Widget Function(BuildContext, Object, StackTrace?)? errorBuilder;
 
   const GameBuilder(
       {super.key,
       this.gameManager,
-      required this.builder,
-      this.gameStartedBuilder,
+      required this.notStartedBuilder,
+      required this.gameStartedBuilder,
       this.loadingBuilder,
       this.errorBuilder});
 
@@ -40,12 +40,12 @@ class GameBuilder<T extends GameState> extends StatelessWidget {
             }
             return placeholder;
           }
-          final roomData = snapshot.data!.cast<T>();
-          if (roomData.gameStarted && gameStartedBuilder != null) {
-            return gameStartedBuilder!(
-                context, roomData, roomData.gameState!, gameManager);
+          final roomData = snapshot.data!;
+          if (roomData.gameStarted) {
+            return gameStartedBuilder(context,
+                (roomData as RoomDataGameState).cast<T>(), gameManager);
           }
-          return builder(context, roomData, gameManager);
+          return notStartedBuilder(context, roomData, gameManager);
         });
   }
 }

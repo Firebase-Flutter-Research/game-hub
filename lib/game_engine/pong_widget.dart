@@ -7,7 +7,7 @@ import 'package:flutter_fire_engine/model/room.dart';
 import 'package:game_engine/game_engine.dart';
 
 class PongWidget extends GameWidget {
-  final RoomData<PongGameState> roomData;
+  final RoomDataGameState<PongGameState> roomData;
 
   const PongWidget({super.key, required super.size, required this.roomData});
 
@@ -23,7 +23,7 @@ class PongWidget extends GameWidget {
       fontSize: 4,
     );
     final textSpanUp = TextSpan(
-        text: roomData.gameState!.scores[other].toString(), style: textStyle);
+        text: roomData.gameState.scores[other].toString(), style: textStyle);
     final textPainterUp = TextPainter(
       text: textSpanUp,
       textDirection: TextDirection.ltr,
@@ -34,7 +34,7 @@ class PongWidget extends GameWidget {
         Offset(manager.canvasSize.width / 2 - textPainterUp.width / 2,
             manager.canvasSize.height / 4 - textPainterUp.height));
     final textSpanDown = TextSpan(
-        text: roomData.gameState!.scores[gameManager.player].toString(),
+        text: roomData.gameState.scores[gameManager.player].toString(),
         style: textStyle);
     final textPainterDown = TextPainter(
       text: textSpanDown,

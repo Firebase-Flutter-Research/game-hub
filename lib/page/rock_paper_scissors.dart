@@ -13,11 +13,11 @@ class RockPaperScissorsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameBuilder<RockPaperScissorsGameState>(
-        builder: (context, roomData, gameManager) =>
+        notStartedBuilder: (context, roomData, gameManager) =>
             LobbyWidget(roomData: roomData, gameManager: gameManager),
-        gameStartedBuilder: (context, roomData, gameState, gameManager) {
+        gameStartedBuilder: (context, roomData, gameManager) {
           final index = roomData.players.indexOf(GameManager.instance.player);
-          if (index != -1 && roomData.gameState!.choices[index] == null) {
+          if (index != -1 && roomData.gameState.choices[index] == null) {
             return _gameWidget(context, roomData);
           }
           return const Center(child: Text("Waiting for the other player..."));
