@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/model/firebase_room_data.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
+import 'package:flutter_fire_engine/model/rooms_builder.dart';
 
 class RoomsPage extends StatefulWidget {
   const RoomsPage({super.key});
@@ -32,28 +34,23 @@ class _RoomsPageState extends State<RoomsPage> {
           Expanded(
               child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
-                  child: StreamBuilder(
-                    stream: gameManager.getRooms(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Container();
-                      }
+                  child: RoomsBuilder(
+                    game: gameManager.game!,
+                    builder: (context, roomDataList) {
                       return Column(
-                          children: snapshot.data!.docs
-                              .where((doc) =>
-                                  (doc["lastUpdateTimestamp"] == null ||
-                                      Timestamp.now()
-                                              .toDate()
-                                              .difference(
-                                                  doc["lastUpdateTimestamp"]
-                                                      .toDate())
-                                              .inMinutes <
-                                          minutesBeforeHide) &&
-                                  !doc["gameStarted"] &&
-                                  doc["playerCount"] <
-                                      gameManager.game!.playerLimit)
-                              .map((doc) => _roomListItem(context, doc))
-                              .toList());
+                        children: roomDataList
+                            .where((data) =>
+                                Timestamp.now()
+                                        .toDate()
+                                        .difference(
+                                            data.lastUpdateTimestamp.toDate())
+                                        .inMinutes <
+                                    minutesBeforeHide &&
+                                !data.gameStarted &&
+                                data.playerCount < data.game.playerLimit)
+                            .map((data) => _roomListItem(context, data))
+                            .toList(),
+                      );
                     },
                   ))),
           Row(
@@ -104,10 +101,8 @@ class _RoomsPageState extends State<RoomsPage> {
     );
   }
 
-  Widget _roomListItem(
-      BuildContext context, DocumentSnapshot<Map<String, dynamic>> doc) {
+  Widget _roomListItem(BuildContext context, FirebaseRoomData roomData) {
     final gameManager = GameManager.instance;
-    if (doc.data() == null || !gameManager.hasGame()) return Container();
     return Padding(
       padding: const EdgeInsets.all(4.0),
       child: Row(
@@ -117,7 +112,7 @@ class _RoomsPageState extends State<RoomsPage> {
               child: ElevatedButton(
                   onPressed: () async {
                     String? password;
-                    if (doc["password"] != null) {
+                    if (roomData.password != null) {
                       password = await showDialog<String?>(
                           context: context,
                           useRootNavigator: false,
@@ -149,7 +144,8 @@ class _RoomsPageState extends State<RoomsPage> {
                         return;
                       }
                     }
-                    if (await gameManager.joinRoom(doc, password)) {
+                    if (await gameManager.joinRoom(
+                        roomData.document, password)) {
                       Navigator.of(context).pushNamed("/inGame");
                     } else {
                       ScaffoldMessenger.of(context)
@@ -166,12 +162,12 @@ class _RoomsPageState extends State<RoomsPage> {
                           Expanded(
                             child: Center(
                               child: Text(
-                                  "${doc.data()?["host"]["name"]}'s Room (${doc.data()?["playerCount"]}/${gameManager.game!.playerLimit})"),
+                                  "${roomData.host.name}'s Room (${roomData.playerCount}/${roomData.game.playerLimit})"),
                             ),
                           ),
                         ],
                       ),
-                      if (doc["password"] != null)
+                      if (roomData.password != null)
                         const Icon(
                           Icons.lock,
                           color: Colors.black87,

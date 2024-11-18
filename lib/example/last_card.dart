@@ -143,6 +143,19 @@ class LastCardCard {
   }
 }
 
+class LastCardGameState extends GameState {
+  int currentPlayer;
+  Map<Player, List<LastCardCard>> playerCards;
+  List<LastCardCard> playedCards;
+  int direction;
+
+  LastCardGameState(
+      {required this.currentPlayer,
+      required this.playerCards,
+      required this.playedCards,
+      required this.direction});
+}
+
 class LastCard extends Game {
   @override
   String get name => "Last Card";
@@ -154,7 +167,7 @@ class LastCard extends Game {
   int get playerLimit => 4;
 
   @override
-  Map<String, dynamic> getInitialGameState(
+  GameState getInitialGameState(
       {required List<Player> players,
       required Player host,
       required Random random}) {
@@ -169,25 +182,24 @@ class LastCard extends Game {
     do {
       startingCard = LastCardCard.getRandomCards(1, random).first;
     } while (startingCard.color == null);
-    return {
-      "currentPlayer": 0,
-      "playerCards": playerCards,
-      "playedCards": [startingCard],
-      "direction": 1,
-    };
+    return LastCardGameState(
+        currentPlayer: 0,
+        playerCards: playerCards,
+        playedCards: [startingCard],
+        direction: 1);
   }
 
   @override
   CheckResult checkPerformEvent(
       {required Map<String, dynamic> event,
       required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant LastCardGameState gameState,
       required List<Player> players,
       required Player host}) {
-    if (players.indexOf(player) != gameState["currentPlayer"]) {
+    if (players.indexOf(player) != gameState.currentPlayer) {
       return const NotPlayerTurn();
     }
-    final topCard = gameState["playedCards"].last;
+    final topCard = gameState.playedCards.last;
     if (event["isPlace"] ?? false) {
       final card = LastCardCard.fromJson(event["card"]);
       if (card.color != null &&
@@ -196,7 +208,7 @@ class LastCard extends Game {
         return const CheckResultFailure("Card cannot be placed");
       }
     } else if (event["isDraw"] ?? false) {
-      if (gameState["playerCards"][player].any((card) =>
+      if (gameState.playerCards[player]!.any((card) =>
           card.color == null ||
           card.color == topCard.color ||
           card.value == topCard.value)) {
@@ -206,28 +218,28 @@ class LastCard extends Game {
     return const CheckResultSuccess();
   }
 
-  void moveOneTurn(Map<String, dynamic> gameState, int playerCount) {
-    gameState["currentPlayer"] =
-        (gameState["currentPlayer"] + playerCount + gameState["direction"]) %
+  void moveOneTurn(LastCardGameState gameState, int playerCount) {
+    gameState.currentPlayer =
+        (gameState.currentPlayer + playerCount + gameState.direction) %
             playerCount;
   }
 
-  void reverseDirection(Map<String, dynamic> gameState) {
-    gameState["direction"] *= -1;
+  void reverseDirection(LastCardGameState gameState) {
+    gameState.direction *= -1;
   }
 
   List<LastCardCard> addCardsToPlayer(
-      Map<String, dynamic> gameState, Player player, int count, Random random) {
+      LastCardGameState gameState, Player player, int count, Random random) {
     final cards = LastCardCard.getRandomCards(count, random);
-    gameState["playerCards"][player].addAll(cards);
-    LastCardCard.sortCards(gameState["playerCards"][player]);
+    gameState.playerCards[player]!.addAll(cards);
+    LastCardCard.sortCards(gameState.playerCards[player]!);
     return cards;
   }
 
   @override
   void processEvent(
       {required GameEvent event,
-      required Map<String, dynamic> gameState,
+      required covariant LastCardGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
@@ -252,22 +264,22 @@ class LastCard extends Game {
         case LastCardType.plusTwo:
           moveOneTurn(gameState, players.length);
           addCardsToPlayer(
-              gameState, players[gameState["currentPlayer"]], 2, random);
+              gameState, players[gameState.currentPlayer], 2, random);
           break;
         case LastCardType.wild:
           break;
         case LastCardType.wildPlusFour:
           moveOneTurn(gameState, players.length);
           addCardsToPlayer(
-              gameState, players[gameState["currentPlayer"]], 4, random);
+              gameState, players[gameState.currentPlayer], 4, random);
           break;
       }
-      gameState["playedCards"].add(card);
-      gameState["playerCards"][event.author].remove(card);
+      gameState.playedCards.add(card);
+      gameState.playerCards[event.author]!.remove(card);
       moveOneTurn(gameState, players.length);
     } else if (event.payload["isDraw"] ?? false) {
       final card = addCardsToPlayer(gameState, event.author, 1, random).first;
-      final topCard = gameState["playedCards"].last;
+      final topCard = gameState.playedCards.last;
       if (card.color != null &&
           card.color != topCard.color &&
           card.value != topCard.value) {
@@ -279,30 +291,30 @@ class LastCard extends Game {
   @override
   void onPlayerLeave(
       {required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant LastCardGameState gameState,
       required List<Player> players,
       required List<Player> oldPlayers,
       required Player host,
       required Random random}) {
     int leaveIndex = oldPlayers.indexOf(player);
-    if (leaveIndex == gameState["currentPlayer"]) {
-      gameState["currentPlayer"] = (gameState["currentPlayer"] +
-              (gameState["direction"] > 0 ? 0 : -1) +
+    if (leaveIndex == gameState.currentPlayer) {
+      gameState.currentPlayer = (gameState.currentPlayer +
+              (gameState.direction > 0 ? 0 : -1) +
               players.length) %
           players.length;
-    } else if (leaveIndex < gameState["currentPlayer"]) {
-      gameState["currentPlayer"] -= 1;
+    } else if (leaveIndex < gameState.currentPlayer) {
+      gameState.currentPlayer -= 1;
     }
   }
 
   @override
   Map<String, dynamic>? checkGameEnd(
-      {required Map<String, dynamic> gameState,
+      {required covariant LastCardGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
     for (var player in players) {
-      if (gameState["playerCards"][player].isEmpty) {
+      if (gameState.playerCards[player]!.isEmpty) {
         return {"draw": false, "winnerName": player.name};
       }
     }

@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
 import 'package:flutter_fire_engine/logic/utils.dart';
+import 'package:flutter_fire_engine/model/game_builder.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/model/room.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter_fire_engine/page/lobby_widget.dart';
 
 class TicTacToePage extends StatelessWidget {
-  final RoomData roomData;
-
-  const TicTacToePage({super.key, required this.roomData});
+  const TicTacToePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return _gameWidget(context, roomData);
+    return GameBuilder<TicTacToeGameState>(
+      notStartedBuilder: (context, roomData, gameManager) =>
+          LobbyWidget(roomData: roomData, gameManager: gameManager),
+      gameStartedBuilder: (context, roomData, gameManager) {
+        return Center(
+            child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+                "It is ${roomData.gameState.currentPlayer < roomData.players.length ? roomData.players[roomData.gameState.currentPlayer].name : "No one"}'s turn"),
+            _tableWidget(context, roomData.gameState),
+          ],
+        ));
+      },
+    );
   }
 }
 
-Widget _gameWidget(BuildContext context, RoomData roomData) {
-  return Center(
-      child: Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-          "It is ${roomData.gameState!["currentPlayer"] < roomData.players.length ? roomData.players[roomData.gameState!["currentPlayer"]].name : "No one"}'s turn"),
-      _tableWidget(context, roomData),
-    ],
-  ));
-}
-
-Widget _tableWidget(BuildContext context, RoomData roomData) {
+Widget _tableWidget(BuildContext context, TicTacToeGameState gameState) {
   final gameManager = GameManager.instance;
   List<IconData> icons = [Icons.close, Icons.circle_outlined];
   List<Row> rows = [];
@@ -35,7 +37,7 @@ Widget _tableWidget(BuildContext context, RoomData roomData) {
     rows.add(Row(
         mainAxisSize: MainAxisSize.min,
         children: joinWidgets(
-            List<int>.from(roomData.gameState!["board"])
+            gameState.board
                 .sublist(i, i + 3)
                 .mapIndexed((j, e) => Padding(
                       padding: const EdgeInsets.all(4.0),

@@ -26,6 +26,12 @@ enum RockPaperScissorsChoice {
       RockPaperScissorsChoice.values.where((e) => e.key == key).first;
 }
 
+class RockPaperScissorsGameState extends GameState {
+  List<RockPaperScissorsChoice?> choices;
+
+  RockPaperScissorsGameState({required this.choices});
+}
+
 class RockPaperScissors extends Game {
   @override
   String get name => "Rock Paper Scissors";
@@ -37,22 +43,22 @@ class RockPaperScissors extends Game {
   int get playerLimit => 2;
 
   @override
-  Map<String, dynamic> getInitialGameState(
+  GameState getInitialGameState(
       {required List<Player> players,
       required Player host,
       required Random random}) {
-    return {"choices": List<RockPaperScissorsChoice?>.filled(2, null)};
+    return RockPaperScissorsGameState(choices: List.filled(2, null));
   }
 
   @override
   CheckResult checkPerformEvent(
       {required Map<String, dynamic> event,
       required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant RockPaperScissorsGameState gameState,
       required List<Player> players,
       required Player host}) {
     var index = players.indexOf(player);
-    final List<RockPaperScissorsChoice?> choices = gameState["choices"];
+    final List<RockPaperScissorsChoice?> choices = gameState.choices;
     if (index < 0 || index >= choices.length) return const OutOfBounds();
     if (choices[index] != null) {
       return const CheckResultFailure("You already made your choice.");
@@ -63,19 +69,19 @@ class RockPaperScissors extends Game {
   @override
   void processEvent(
       {required GameEvent event,
-      required Map<String, dynamic> gameState,
+      required covariant RockPaperScissorsGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
     var index = players.indexOf(event.author);
-    final List<RockPaperScissorsChoice?> choices = gameState["choices"];
+    final List<RockPaperScissorsChoice?> choices = gameState.choices;
     choices[index] = RockPaperScissorsChoice.fromKey(event.payload["choice"]);
   }
 
   @override
   void onPlayerLeave(
       {required Player player,
-      required Map<String, dynamic> gameState,
+      required covariant RockPaperScissorsGameState gameState,
       required List<Player> players,
       required List<Player> oldPlayers,
       required Player host,
@@ -83,11 +89,11 @@ class RockPaperScissors extends Game {
 
   @override
   Map<String, dynamic>? checkGameEnd(
-      {required Map<String, dynamic> gameState,
+      {required covariant RockPaperScissorsGameState gameState,
       required List<Player> players,
       required Player host,
       required Random random}) {
-    final List<RockPaperScissorsChoice?> choices = gameState["choices"];
+    final List<RockPaperScissorsChoice?> choices = gameState.choices;
     if (choices.any((e) => e == null)) return null;
     if (choices[0] == choices[1]) return {"draw": true};
     return {

@@ -4,26 +4,30 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/memory_match.dart';
+import 'package:flutter_fire_engine/model/game_builder.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/model/room.dart';
+import 'package:flutter_fire_engine/page/lobby_widget.dart';
 
 class MemoryMatchPage extends StatelessWidget {
-  final RoomData roomData;
-
-  const MemoryMatchPage({super.key, required this.roomData});
+  const MemoryMatchPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final gameManager = GameManager.instance;
-    return Center(
-        child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-            "It is ${roomData.gameState!["currentPlayer"] < roomData.players.length ? roomData.players[roomData.gameState!["currentPlayer"]].name : "No one"}'s turn"),
-        _tableWidget(context, roomData, gameManager),
-      ],
-    ));
+    return GameBuilder<MemoryMatchGameState>(
+      notStartedBuilder: (context, roomData, gameManager) =>
+          LobbyWidget(roomData: roomData, gameManager: gameManager),
+      gameStartedBuilder: (context, roomData, gameManager) {
+        return Center(
+            child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+                "It is ${roomData.gameState.currentPlayer < roomData.players.length ? roomData.players[roomData.gameState.currentPlayer].name : "No one"}'s turn"),
+            _tableWidget(context, roomData.gameState, gameManager),
+          ],
+        ));
+      },
+    );
   }
 
   Widget _cardWidgetBase(Color color, double size, [Widget? child]) {
@@ -83,8 +87,8 @@ class MemoryMatchPage extends StatelessWidget {
     );
   }
 
-  Widget _tableWidget(
-      BuildContext context, RoomData roomData, GameManager gameManager) {
+  Widget _tableWidget(BuildContext context, MemoryMatchGameState gameState,
+      GameManager gameManager) {
     List<Row> rows = [];
     double screenWidth = MediaQuery.sizeOf(context).width;
     double screenHeight = MediaQuery.sizeOf(context).height;
@@ -93,21 +97,18 @@ class MemoryMatchPage extends StatelessWidget {
     for (int i = 0; i < MemoryMatch.numberOfPairs * 2; i += numberOfColumns) {
       rows.add(Row(
           mainAxisSize: MainAxisSize.min,
-          children: List<MemoryCard>.from(roomData.gameState!["layout"])
+          children: gameState.layout
               .sublist(i, i + numberOfColumns)
               .mapIndexed((j, e) => Padding(
                     padding: const EdgeInsets.all(2.0),
                     child: SizedBox(
                       width: cardSize,
                       height: cardSize,
-                      child: _cardWidget(
-                          roomData.gameState!["layout"][i + j], cardSize,
+                      child: _cardWidget(gameState.layout[i + j], cardSize,
                           () async {
-                        if (roomData.gameState!["currentlyFlipped"].length <
-                            2) {
+                        if (gameState.currentlyFlipped.length < 2) {
                           await gameManager.sendGameEvent({"position": i + j});
-                          if (roomData.gameState!["currentlyFlipped"].length ==
-                              2) {
+                          if (gameState.currentlyFlipped.length == 2) {
                             Timer(const Duration(seconds: 1, milliseconds: 500),
                                 () async {
                               await gameManager.sendGameEvent({"position": -1});

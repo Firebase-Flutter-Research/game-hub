@@ -8,8 +8,8 @@ import 'package:flutter_fire_engine/example/memory_match.dart';
 import 'package:flutter_fire_engine/example/pong.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
+import 'package:flutter_fire_engine/model/game.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/model/room.dart';
 import 'package:flutter_fire_engine/page/chat_room.dart';
 import 'package:flutter_fire_engine/page/checkers.dart';
 import 'package:flutter_fire_engine/page/connect_four.dart';
@@ -32,26 +32,26 @@ class _InGamePageState extends State<InGamePage> {
   late GameManager gameManager;
 
   // Add more games to game hub via this function.
-  Widget getGameWidget(RoomData roomData) {
-    switch (roomData.game.runtimeType) {
+  Widget getGameWidget(Game? game) {
+    switch (game.runtimeType) {
       case TicTacToe:
-        return TicTacToePage(roomData: roomData);
+        return TicTacToePage();
       case ConnectFour:
-        return ConnectFourPage(roomData: roomData);
+        return ConnectFourPage();
       case Checkers:
-        return CheckersPage(roomData: roomData);
+        return CheckersPage();
       case RockPaperScissors:
-        return RockPaperScissorsPage(roomData: roomData);
+        return RockPaperScissorsPage();
       case LastCard:
-        return LastCardPage(roomData: roomData);
+        return LastCardPage();
       case MemoryMatch:
-        return MemoryMatchPage(roomData: roomData);
+        return MemoryMatchPage();
       case DrawMyThing:
-        return DrawMyThingWidget(roomData: roomData);
+        return DrawMyThingWidget();
       case Endangered:
-        return EndangeredPage(roomData: roomData);
+        return EndangeredPage();
       case Pong:
-        return PongPage(roomData: roomData);
+        return PongPage();
       default:
         return Container();
     }
@@ -127,44 +127,8 @@ class _InGamePageState extends State<InGamePage> {
         appBar: AppBar(
           title: const Text("In-game"),
         ),
-        body: StreamBuilder(
-            stream: gameManager.roomDataStream,
-            builder: (context, snapshot) {
-              if (snapshot.data == null || !context.mounted) return Container();
-              final roomData = snapshot.data!;
-              if (!gameManager.hasRoom() || !roomData.gameStarted) {
-                return _lobbyWidget(context, roomData);
-              }
-              return getGameWidget(roomData);
-            }),
+        body: getGameWidget(gameManager.game),
         floatingActionButton: ChatRoomButton(),
-      ),
-    );
-  }
-
-  Widget _lobbyWidget(BuildContext context, RoomData roomData) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!roomData.hasRequiredPlayers)
-            Text(
-                "Waiting for more players... (${roomData.players.length}/${roomData.game.playerLimit})"),
-          if (roomData.hasRequiredPlayers)
-            Column(
-              children: [
-                const Text("Player requirement has been met."),
-                if (gameManager.player == roomData.host)
-                  TextButton(
-                      onPressed: () {
-                        gameManager.startGame();
-                      },
-                      child: const Text("Start")),
-                if (gameManager.player != roomData.host)
-                  const Text("Waiting for host to start..."),
-              ],
-            )
-        ],
       ),
     );
   }
