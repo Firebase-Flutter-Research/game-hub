@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
+import 'package:flutter_fire_engine/model/game_builder.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/room.dart';
+import 'package:flutter_fire_engine/page/lobby_widget.dart';
 
 class RockPaperScissorsPage extends StatelessWidget {
-  final RoomData roomData;
+  // final RoomData roomData;
 
-  const RockPaperScissorsPage({super.key, required this.roomData});
+  const RockPaperScissorsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final index = roomData.players.indexOf(GameManager.instance.player);
-    if (index != -1 && roomData.gameState!["choices"][index] == null) {
-      return _gameWidget(context, roomData);
-    }
-    return const Center(child: Text("Waiting for the other player..."));
+    return GameBuilder<RockPaperScissorsGameState>(
+        notStartedBuilder: (context, roomData, gameManager) =>
+            LobbyWidget(roomData: roomData, gameManager: gameManager),
+        gameStartedBuilder: (context, roomData, gameManager) {
+          final index = roomData.players.indexOf(GameManager.instance.player);
+          if (index != -1 && roomData.gameState.choices[index] == null) {
+            return _gameWidget(context, roomData);
+          }
+          return const Center(child: Text("Waiting for the other player..."));
+        });
   }
 }
 

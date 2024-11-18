@@ -21,14 +21,13 @@ class TooManyPlayers extends CheckResultFailure {
   const TooManyPlayers() : super("There are too many players in the room");
 }
 
-class RoomData<T extends GameState> {
+class RoomData {
   final Game game;
   final List<Player> players;
   final Player host;
   final List<Event> events;
-  final T? gameState;
 
-  bool get gameStarted => gameState != null;
+  bool get gameStarted => this is RoomDataGameState;
   bool get hasRequiredPlayers => players.length >= game.requiredPlayers;
   bool get isOvercapacity => players.length > game.playerLimit;
 
@@ -36,16 +35,26 @@ class RoomData<T extends GameState> {
       {required this.game,
       required this.players,
       required this.host,
-      required this.events,
+      required this.events});
+}
+
+class RoomDataGameState<T extends GameState> extends RoomData {
+  final T gameState;
+
+  const RoomDataGameState(
+      {required super.game,
+      required super.players,
+      required super.host,
+      required super.events,
       required this.gameState});
 
-  RoomData<U> cast<U extends GameState>() {
-    return RoomData<U>(
+  RoomDataGameState<U> cast<U extends GameState>() {
+    return RoomDataGameState<U>(
       game: game,
       players: players,
       host: host,
       events: events,
-      gameState: gameState as U?,
+      gameState: gameState as U,
     );
   }
 }
@@ -149,12 +158,19 @@ class Room {
   }
 
   RoomData getRoomData() {
+    if (gameStarted) {
+      return RoomDataGameState(
+          game: game,
+          players: players.toList(),
+          host: host,
+          events: events.toList(),
+          gameState: gameState!);
+    }
     return RoomData(
         game: game,
         players: players.toList(),
         host: host,
-        events: events.toList(),
-        gameState: gameState);
+        events: events.toList());
   }
 
   Either<CheckResultFailure, dynamic> getGameResponse(

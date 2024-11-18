@@ -3,14 +3,14 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/checkers.dart';
+import 'package:flutter_fire_engine/model/game_builder.dart';
 import 'package:flutter_fire_engine/model/game_manager.dart';
 import 'package:flutter_fire_engine/model/room.dart';
+import 'package:flutter_fire_engine/page/lobby_widget.dart';
 import 'package:pair/pair.dart';
 
 class CheckersPage extends StatefulWidget {
-  final RoomData roomData;
-
-  const CheckersPage({super.key, required this.roomData});
+  const CheckersPage({super.key});
 
   @override
   State<CheckersPage> createState() => _CheckersPageState();
@@ -38,20 +38,24 @@ class _CheckersPageState extends State<CheckersPage> {
 
   @override
   Widget build(BuildContext context) {
-    roomData = widget.roomData;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-              "It is ${roomData.gameState!["currentPlayer"] < roomData.players.length ? roomData.players[roomData.gameState!["currentPlayer"]].name : "No one"}'s turn"),
-          _checkerboardWidget(context, roomData),
-        ],
-      ),
-    );
+    return GameBuilder<CheckersGameState>(
+        notStartedBuilder: (context, roomData, gameManager) =>
+            LobbyWidget(roomData: roomData, gameManager: gameManager),
+        gameStartedBuilder: (context, roomData, gameManager) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                    "It is ${roomData.gameState.currentPlayer < roomData.players.length ? roomData.players[roomData.gameState.currentPlayer].name : "No one"}'s turn"),
+                _checkerboardWidget(context),
+              ],
+            ),
+          );
+        });
   }
 
-  Widget _checkerboardWidget(BuildContext context, RoomData roomData) {
+  Widget _checkerboardWidget(BuildContext context) {
     final board = List<List<CheckersPiece?>>.from(gameManager
         .getGameResponse({"type": CheckersRequestType.getBoard}).right);
     return Column(
