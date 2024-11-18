@@ -2,9 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/pong.dart';
-import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/model/player.dart';
-import 'package:flutter_fire_engine/model/room.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 import 'package:game_engine/game_engine.dart';
 
 class Wall extends GameObject {

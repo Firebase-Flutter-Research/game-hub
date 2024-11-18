@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter_fire_engine/model/event.dart';
-import 'package:flutter_fire_engine/model/game.dart';
-import 'package:flutter_fire_engine/model/player.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 
 class NotPlayerTurn extends CheckResultFailure {
   const NotPlayerTurn() : super("Not your turn");

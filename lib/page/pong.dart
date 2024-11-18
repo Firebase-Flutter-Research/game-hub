@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import "package:flutter_fire_engine/example/pong.dart";
 import "package:flutter_fire_engine/game_engine/pong_widget.dart";
-import "package:flutter_fire_engine/model/game_builder.dart";
+import 'package:fire_game_infra/fire_game_infra.dart';
 import "package:flutter_fire_engine/page/lobby_widget.dart";
 
 class PongPage extends StatelessWidget {

@@ -3,9 +3,7 @@ import 'dart:ui';
 
 import 'package:either_dart/either.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
-import 'package:flutter_fire_engine/model/event.dart';
-import 'package:flutter_fire_engine/model/game.dart';
-import 'package:flutter_fire_engine/model/player.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 import 'package:pair/pair.dart';
 
 class CheckersRoute {

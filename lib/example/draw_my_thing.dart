@@ -4,9 +4,7 @@ import 'dart:ui';
 import 'package:collection/collection.dart';
 import 'package:either_dart/either.dart';
 import 'package:flutter_fire_engine/example/draw_my_thing_words.dart';
-import 'package:flutter_fire_engine/model/event.dart';
-import 'package:flutter_fire_engine/model/game.dart';
-import 'package:flutter_fire_engine/model/player.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 import 'package:pair/pair.dart';
 
 class DrawMyThingGameState extends GameState {

@@ -3,9 +3,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/example/checkers.dart';
-import 'package:flutter_fire_engine/model/game_builder.dart';
-import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/model/room.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 import 'package:flutter_fire_engine/page/lobby_widget.dart';
 import 'package:pair/pair.dart';
 

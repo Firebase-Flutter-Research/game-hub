@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_fire_engine/page/home.dart';
 import 'package:flutter_fire_engine/page/in_game.dart';
 import 'package:flutter_fire_engine/page/rooms.dart';
-import 'package:flutter_fire_engine/page/tic_tac_toe.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

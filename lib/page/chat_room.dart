@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/model/player.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 
 class Message {
   final String message;

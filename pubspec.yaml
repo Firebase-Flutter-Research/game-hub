@@ -42,6 +42,9 @@ dependencies:
   game_engine:
     git:
       url: https://github.com/Firebase-Flutter-Research/game-engine.git
+  fire_game_infra:
+    git:
+      url: https://github.com/Firebase-Flutter-Research/fire-game-infra.git
 
 dev_dependencies:
   flutter_test:
