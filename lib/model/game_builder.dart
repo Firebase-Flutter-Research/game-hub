@@ -25,8 +25,13 @@ class GameBuilder<T extends GameState> extends StatelessWidget {
     return StreamBuilder(
         stream: gameManager.roomDataStream,
         builder: (context, snapshot) {
-          if (!gameManager.hasRoom()) return Container();
-          const placeholder = Placeholder();
+          const placeholder = SizedBox.shrink();
+          if (!gameManager.hasRoom()) {
+            if (loadingBuilder != null) {
+              return loadingBuilder!(context);
+            }
+            return placeholder;
+          }
           if (snapshot.hasError) {
             if (errorBuilder != null) {
               return errorBuilder!(
