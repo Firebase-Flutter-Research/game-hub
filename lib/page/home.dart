@@ -8,8 +8,7 @@ import 'package:flutter_fire_engine/example/memory_match.dart';
 import 'package:flutter_fire_engine/example/pong.dart';
 import 'package:flutter_fire_engine/example/rock_paper_scissors.dart';
 import 'package:flutter_fire_engine/example/tic_tac_toe.dart';
-import 'package:flutter_fire_engine/model/game.dart';
-import 'package:flutter_fire_engine/model/game_manager.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

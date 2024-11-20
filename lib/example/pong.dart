@@ -2,9 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:either_dart/either.dart';
-import 'package:flutter_fire_engine/model/event.dart';
-import 'package:flutter_fire_engine/model/game.dart';
-import 'package:flutter_fire_engine/model/player.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 
 class PongGameState extends GameState {
   Map<Player, int> scores;

@@ -1,9 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_fire_engine/model/firebase_room_data.dart';
-import 'package:flutter_fire_engine/model/game.dart';
-import 'package:flutter_fire_engine/model/game_manager.dart';
-import 'package:flutter_fire_engine/model/rooms_builder.dart';
+import 'package:fire_game_infra/fire_game_infra.dart';
 
 class RoomsPage extends StatefulWidget {
   const RoomsPage({super.key});
