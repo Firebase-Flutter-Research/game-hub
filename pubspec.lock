@@ -100,12 +100,11 @@ packages:
   fire_game_infra:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: "444d92437b5b4face498980bd4f196f980f3cff1"
-      url: "https://github.com/Firebase-Flutter-Research/fire-game-infra.git"
-    source: git
-    version: "0.0.1"
+      name: fire_game_infra
+      sha256: "25f3186692becf402ba215e70a3ac72003168ed4172514c3836843f960470cec"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   firebase_core:
     dependency: "direct main"
     description:
